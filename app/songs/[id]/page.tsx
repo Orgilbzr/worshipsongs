@@ -411,7 +411,8 @@ export default function SongDetailPage() {
       {/* ChordPro luxury view + dynamic font-size */}
       <div
         className={[
-          'border rounded px-3 py-3 font-mono bg-black/40 space-y-1',
+          // w-full + overflow-x-auto нэмсэн
+          'border rounded px-3 py-3 font-mono bg-black/40 space-y-1 w-full overflow-x-auto',
           fontClasses[fontStep],
         ].join(' ')}
       >

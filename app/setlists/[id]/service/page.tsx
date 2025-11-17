@@ -373,8 +373,8 @@ export default function SetlistServicePage() {
               {/* LUXURY VIEW */}
               <div
                 className={[
-                  'border rounded px-3 py-3 font-mono bg-black/40 space-y-1',
-                  fontClasses[fontStep]
+                  'border rounded px-3 py-3 font-mono bg-black/40 space-y-1 w-full overflow-x-auto',
+                  fontClasses[fontStep],
                 ].join(' ')}
               >
                 {view.map((line, idx) => {
