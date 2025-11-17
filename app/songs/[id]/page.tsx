@@ -1,0 +1,502 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import type { User } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase/client'
+
+type SongDetail = {
+  id: string
+  title: string
+  original_key: string | null
+  tempo: string | null
+  lyrics: string
+  youtube_url: string | null
+  created_at: string
+}
+
+// -------------------- TRANSPOSE HELPERS --------------------
+
+const NOTES = [
+  'C','C#','D','D#','E','F','F#','G','G#','A','A#','B',
+] as const
+type Note = (typeof NOTES)[number]
+
+function normalizeNote(input: string): Note | null {
+  const up = input.trim().toUpperCase()
+  const flats: Record<string, Note> = {
+    DB: 'C#',
+    EB: 'D#',
+    GB: 'F#',
+    AB: 'G#',
+    BB: 'A#',
+  }
+  if (NOTES.includes(up as Note)) return up as Note
+  if (flats[up]) return flats[up]
+  return null
+}
+
+function isChordToken(token: string): boolean {
+  const t = token.trim()
+  if (!t) return false
+  const m = t.match(/^([A-Ga-g][b#]?)(.*)$/)
+  if (!m) return false
+  const suffix = m[2] ?? ''
+  if (suffix.length > 4) return false
+  if (!suffix) return true
+  return /^[a-z0-9]+$/i.test(suffix)
+}
+
+function transposeChord(chord: string, fromKey: string, toKey: string): string {
+  const from = normalizeNote(fromKey)
+  const to = normalizeNote(toKey)
+  if (!from || !to) return chord
+
+  const m = chord.match(/^([A-Ga-g][b#]?)(.*)$/)
+  if (!m) return chord
+
+  const rootRaw = m[1]
+  const suffix = m[2] ?? ''
+  const root = normalizeNote(rootRaw)
+  if (!root) return chord
+
+  const diff =
+    (NOTES.indexOf(to) - NOTES.indexOf(from) + NOTES.length) % NOTES.length
+  const newIndex =
+    (NOTES.indexOf(root) + diff + NOTES.length) % NOTES.length
+
+  return NOTES[newIndex] + suffix
+}
+
+function transposeLyrics(
+  lyrics: string,
+  fromKey: string | null,
+  toKey: string
+): string {
+  if (!fromKey || fromKey.trim() === '' || fromKey === toKey) return lyrics
+
+  return lyrics
+    .split('\n')
+    .map((line) => {
+      if (line.includes('[') && line.includes(']')) {
+        return line.replace(/\[([^\]]+)\]/g, (full, inner) => {
+          const parts = String(inner).split('/')
+          const mapped = parts.map((part) => {
+            const trimmed = part.trim()
+            if (!isChordToken(trimmed)) return trimmed
+            return transposeChord(trimmed, fromKey, toKey)
+          })
+          return '[' + mapped.join('/') + ']'
+        })
+      }
+
+      const parts = line.split(/(\s+)/)
+      const mapped = parts.map((part) => {
+        const trimmed = part.trim()
+        if (!trimmed) return part
+        if (!isChordToken(trimmed)) return part
+        const newChord = transposeChord(trimmed, fromKey, toKey)
+        return part.replace(trimmed, newChord)
+      })
+      return mapped.join('')
+    })
+    .join('\n')
+}
+
+// -------------------- CHORDPRO LUXURY VIEW --------------------
+
+type ViewLine =
+  | { type: 'section'; label: string }
+  | { type: 'comment'; text: string }
+  | { type: 'chordLyrics'; chords: string; lyrics: string }
+  | { type: 'chords'; chords: string }
+  | { type: 'text'; text: string }
+
+function chordProLineToTwoLines(line: string): {
+  chords: string
+  lyrics: string
+} {
+  let chords = ''
+  let lyrics = ''
+  let i = 0
+
+  while (i < line.length) {
+    const ch = line[i]
+    if (ch === '[') {
+      const end = line.indexOf(']', i + 1)
+      if (end === -1) {
+        lyrics += ch
+        chords += ' '
+        i++
+        continue
+      }
+      const chordText = line.slice(i + 1, end).trim()
+
+      while (chords.length < lyrics.length) chords += ' '
+      chords += chordText
+
+      i = end + 1
+    } else {
+      lyrics += ch
+      chords += ch === '\t' ? '\t' : ' '
+      i++
+    }
+  }
+
+  return { chords, lyrics }
+}
+
+function buildChordProView(lyrics: string): ViewLine[] {
+  const lines = lyrics.split('\n')
+  const result: ViewLine[] = []
+
+  for (const raw of lines) {
+    const line = raw.replace(/\r$/, '')
+    const trimmed = line.trim()
+
+    if (trimmed === '') {
+      result.push({ type: 'text', text: '' })
+      continue
+    }
+
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      const inner = trimmed.slice(1, -1).trim()
+      result.push({ type: 'section', label: inner })
+      continue
+    }
+
+    if (trimmed.startsWith('#') || trimmed.startsWith(';')) {
+      result.push({
+        type: 'comment',
+        text: trimmed.replace(/^([#;]\s*)/, ''),
+      })
+      continue
+    }
+
+    const tokens = trimmed.split(/\s+/)
+    if (tokens.length > 0 && tokens.every((t) => isChordToken(t))) {
+      result.push({ type: 'chords', chords: line })
+      continue
+    }
+
+    if (line.includes('[') && line.includes(']')) {
+      const { chords, lyrics } = chordProLineToTwoLines(line)
+      if (chords.trim().length > 0) {
+        result.push({ type: 'chordLyrics', chords, lyrics })
+        continue
+      }
+    }
+
+    result.push({ type: 'text', text: line })
+  }
+
+  return result
+}
+
+// -------------------- PAGE COMPONENT --------------------
+
+export default function SongDetailPage() {
+  const params = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const [user, setUser] = useState<User | null>(null)
+  const [song, setSong] = useState<SongDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [currentKey, setCurrentKey] = useState<string | null>(null)
+
+  // Фонтын хэмжээ: 0=жижиг, 1=дунд, 2=том, 3=маш том
+  const [fontStep, setFontStep] = useState<number>(1)
+  const fontClasses = ['text-xs', 'text-sm', 'text-base', 'text-lg']
+  const fontLabels = ['Жижиг', 'Дунд', 'Том', 'Маш том']
+
+  // Хэрэглэгч (зөвхөн "Засах" товч гаргахын тулд)
+  useEffect(() => {
+    let ignore = false
+
+    async function loadUser() {
+      const { data } = await supabase.auth.getUser()
+      if (!ignore) {
+        setUser(data.user ?? null)
+      }
+    }
+
+    loadUser()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!ignore) {
+        setUser(session?.user ?? null)
+      }
+    })
+
+    return () => {
+      ignore = true
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  // Дууг ачаалах – нэвтрээгүй ч ачаална
+  useEffect(() => {
+    let ignore = false
+
+    async function loadSong() {
+      setLoading(true)
+      setError(null)
+
+      const { data, error } = await supabase
+        .from('songs')
+        .select(
+          'id, title, original_key, tempo, lyrics, youtube_url, created_at'
+        )
+        .eq('id', params.id)
+        .single()
+
+      if (ignore) return
+
+      if (error) {
+        console.error(error)
+        setError(error.message)
+        setSong(null)
+      } else {
+        const s = data as SongDetail
+        const keyFromQuery = searchParams.get('key')
+        setSong(s)
+        setCurrentKey(
+          keyFromQuery && keyFromQuery.trim()
+            ? keyFromQuery
+            : s.original_key ?? null
+        )
+      }
+      setLoading(false)
+    }
+
+    if (params?.id) {
+      loadSong()
+    }
+
+    return () => {
+      ignore = true
+    }
+  }, [params?.id, searchParams])
+
+  if (loading) {
+    return <p>Дууны мэдээлэл ачаалж байна…</p>
+  }
+
+  if (error || !song) {
+    return (
+      <div className="space-y-3">
+        <h1 className="text-2xl font-semibold">Дууны дэлгэрэнгүй</h1>
+        <p className="text-sm text-red-500">
+          {error ? `Алдаа: ${error}` : 'Ийм дуу олдсонгүй.'}
+        </p>
+        <button
+          onClick={() => router.push('/songs')}
+          className="text-sm underline"
+        >
+          Дууны сан руу буцах
+        </button>
+      </div>
+    )
+  }
+
+  const effectiveKey = currentKey ?? song.original_key ?? ''
+  const baseLyrics =
+    effectiveKey && song.original_key
+      ? transposeLyrics(song.lyrics, song.original_key, effectiveKey)
+      : song.lyrics
+
+  const viewLines = buildChordProView(baseLyrics)
+
+  return (
+    <div className="space-y-4 max-w-3xl">
+      <button
+        onClick={() => router.push('/songs')}
+        className="text-sm underline"
+      >
+        ← Дууны сан руу буцах
+      </button>
+
+      {/* Гарчиг + баруун дээд буланд "Засах" товч */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-semibold">{song.title}</h1>
+          <div className="text-sm text-gray-500">
+            Анхны тон: {song.original_key ?? '-'} · Темпо:{' '}
+            {song.tempo ?? '-'}
+          </div>
+        </div>
+
+        {user && (
+          <button
+            onClick={() => router.push(`/songs/${song.id}/edit`)}
+            className="px-3 py-1 text-xs border rounded hover:bg-gray-100 hover:text-black"
+          >
+            Засах
+          </button>
+        )}
+      </div>
+
+      {/* Тон сонгох */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium">
+            Одоогийн тон:
+          </span>
+          <select
+            value={effectiveKey || ''}
+            onChange={(e) => setCurrentKey(e.target.value || null)}
+            className="border rounded px-2 py-1 text-sm"
+          >
+            <option value="">Анхны тон</option>
+            {NOTES.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Фонтын хэмжээ – / + */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Фонт:</span>
+          <div className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() =>
+                setFontStep((s) => Math.max(0, s - 1))
+              }
+              disabled={fontStep === 0}
+              className="w-7 h-7 flex items-center justify-center border rounded text-sm disabled:opacity-40"
+              title="Жижигрүүлэх"
+            >
+              –
+            </button>
+            <span className="text-xs text-gray-400 min-w-[70px] text-center">
+              {fontLabels[fontStep]}
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                setFontStep((s) => Math.min(3, s + 1))
+              }
+              disabled={fontStep === 3}
+              className="w-7 h-7 flex items-center justify-center border rounded text-sm disabled:opacity-40"
+              title="Томруулах"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Youtube линк (байвал) */}
+      {song.youtube_url && (
+        <div>
+          <p className="text-sm font-medium mb-1">Youtube:</p>
+          <a
+            href={song.youtube_url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm text-blue-400 underline break-all"
+          >
+            {song.youtube_url}
+          </a>
+        </div>
+      )}
+
+      {/* ChordPro luxury view + dynamic font-size */}
+      <div
+        className={[
+          'border rounded px-3 py-3 font-mono bg-black/40 space-y-1',
+          fontClasses[fontStep],
+        ].join(' ')}
+      >
+        {viewLines.map((line, idx) => {
+          if (line.type === 'section') {
+            const lower = line.label.toLowerCase()
+            let badgeClass =
+              'text-gray-300 border-gray-600 bg-gray-900/40'
+
+            if (lower.startsWith('verse')) {
+              badgeClass =
+                'text-emerald-300 border-emerald-500/60 bg-emerald-900/20'
+            } else if (lower.startsWith('chorus')) {
+              badgeClass =
+                'text-amber-300 border-amber-500/60 bg-amber-900/20'
+            } else if (lower.startsWith('bridge')) {
+              badgeClass =
+                'text-purple-300 border-purple-500/60 bg-purple-900/20'
+            } else if (
+              lower.startsWith('intro') ||
+              lower.startsWith('outro') ||
+              lower.startsWith('pre-chorus')
+            ) {
+              badgeClass =
+                'text-sky-300 border-sky-500/60 bg-sky-900/20'
+            }
+
+            return (
+              <div key={idx} className="mt-4 mb-1">
+                <div className="pl-4 border-l-2 border-gray-700">
+                  <span
+                    className={[
+                      'inline-flex items-center px-2 py-0.5 border rounded-full text-[10px] font-semibold tracking-wide uppercase',
+                      badgeClass,
+                    ].join(' ')}
+                  >
+                    {line.label}
+                  </span>
+                </div>
+              </div>
+            )
+          }
+
+          if (line.type === 'comment') {
+            return (
+              <div
+                key={idx}
+                className="text-xs text-gray-500 italic"
+              >
+                {line.text}
+              </div>
+            )
+          }
+
+          if (line.type === 'chordLyrics') {
+            return (
+              <div key={idx} className="mb-1">
+                <div className="whitespace-pre text-blue-300 pl-4">
+                  {line.chords}
+                </div>
+                <div className="whitespace-pre">
+                  {line.lyrics}
+                </div>
+              </div>
+            )
+          }
+
+          if (line.type === 'chords') {
+            return (
+              <div
+                key={idx}
+                className="whitespace-pre text-blue-300 pl-4"
+              >
+                {line.chords}
+              </div>
+            )
+          }
+
+          return (
+            <div key={idx} className="whitespace-pre">
+              {line.text}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
