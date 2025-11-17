@@ -15,10 +15,27 @@ type SongDetail = {
   created_at: string
 }
 
+type SimpleSetlist = {
+  id: string
+  name: string
+  date: string | null
+}
+
 // -------------------- TRANSPOSE HELPERS --------------------
 
 const NOTES = [
-  'C','C#','D','D#','E','F','F#','G','G#','A','A#','B',
+  'C',
+  'C#',
+  'D',
+  'D#',
+  'E',
+  'F',
+  'F#',
+  'G',
+  'G#',
+  'A',
+  'A#',
+  'B',
 ] as const
 type Note = (typeof NOTES)[number]
 
@@ -211,7 +228,16 @@ export default function SongDetailPage() {
   const fontClasses = ['text-xs', 'text-sm', 'text-base', 'text-lg']
   const fontLabels = ['Жижиг', 'Дунд', 'Том', 'Маш том']
 
-  // Хэрэглэгч (зөвхөн "Засах" товч гаргахын тулд)
+  // Сүүлийн сетлистүүд
+  const [setlists, setSetlists] = useState<SimpleSetlist[]>([])
+  const [targetSetlistId, setTargetSetlistId] = useState<string>('')
+  const [addingToSetlist, setAddingToSetlist] = useState(false)
+  const [addSetlistError, setAddSetlistError] = useState<string | null>(null)
+  const [addSetlistMessage, setAddSetlistMessage] = useState<string | null>(
+    null
+  )
+
+  // Хэрэглэгч (зөвхөн "Засах" болон "Жагсаалт руу нэмэх" блокт хэрэгтэй)
   useEffect(() => {
     let ignore = false
 
@@ -282,6 +308,43 @@ export default function SongDetailPage() {
     }
   }, [params?.id, searchParams])
 
+  // Сүүлийн сетлистүүдийг ачаалах (зөвхөн нэвтэрсэн үед)
+  useEffect(() => {
+    if (!user) {
+      setSetlists([])
+      setTargetSetlistId('')
+      return
+    }
+
+    let ignore = false
+
+    async function loadSetlists() {
+      const { data, error } = await supabase
+        .from('setlists')
+        .select('id, name, date')
+        .order('date', { ascending: false })
+        .limit(10)
+
+      if (ignore) return
+      if (error) {
+        console.error(error)
+        return
+      }
+
+      const list = (data ?? []) as SimpleSetlist[]
+      setSetlists(list)
+      if (!targetSetlistId && list.length > 0) {
+        setTargetSetlistId(list[0].id)
+      }
+    }
+
+    loadSetlists()
+
+    return () => {
+      ignore = true
+    }
+  }, [user])
+
   if (loading) {
     return <p>Дууны мэдээлэл ачаалж байна…</p>
   }
@@ -310,6 +373,52 @@ export default function SongDetailPage() {
       : song.lyrics
 
   const viewLines = buildChordProView(baseLyrics)
+
+  // --- Сетлист рүү нэмэх handler (энд байж болно, song null биш болсон учраас) ---
+  async function handleAddToSetlist() {
+    if (!user) {
+      setAddSetlistError('Жагсаалт руу нэмэхийн тулд нэвтэрсэн байх шаардлагатай.')
+      return
+    }
+    if (!targetSetlistId) {
+      setAddSetlistError('Жагсаалт сонгоно уу.')
+      return
+    }
+
+    setAddingToSetlist(true)
+    setAddSetlistError(null)
+    setAddSetlistMessage(null)
+
+    // тухайн сетлистийн хамгийн сүүлийн position олно
+    let nextPosition = 1
+    const { data: posRows, error: posError } = await supabase
+      .from('setlist_songs')
+      .select('position')
+      .eq('setlist_id', targetSetlistId)
+      .order('position', { ascending: false })
+      .limit(1)
+
+    if (!posError && posRows && posRows.length > 0) {
+      const p = (posRows[0] as any).position as number | null
+      nextPosition = (p ?? 0) + 1
+    }
+
+    const { error: insertError } = await supabase.from('setlist_songs').insert({
+      setlist_id: targetSetlistId,
+      song_id: song.id,
+      position: nextPosition,
+      key_override: effectiveKey || song.original_key,
+    })
+
+    if (insertError) {
+      console.error(insertError)
+      setAddSetlistError('Жагсаалт руу нэмэхэд алдаа гарлаа.')
+    } else {
+      setAddSetlistMessage('Жагсаалт руу амжилттай нэмлээ.')
+    }
+
+    setAddingToSetlist(false)
+  }
 
   return (
     <div className="space-y-4 max-w-3xl">
@@ -340,7 +449,7 @@ export default function SongDetailPage() {
         )}
       </div>
 
-      {/* Тон сонгох */}
+      {/* Тон сонгох + фонтын хэмжээ */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium">
@@ -411,7 +520,6 @@ export default function SongDetailPage() {
       {/* ChordPro luxury view + dynamic font-size */}
       <div
         className={[
-          // w-full + overflow-x-auto нэмсэн
           'border rounded px-3 py-3 font-mono bg-black/40 space-y-1 w-full overflow-x-auto',
           fontClasses[fontStep],
         ].join(' ')}
@@ -498,6 +606,80 @@ export default function SongDetailPage() {
           )
         })}
       </div>
+
+      {/* --- Жагсаалт руу нэмэх блок (доод хэсэгт) --- */}
+      {user && (
+        <div className="mt-6 border-t pt-4 space-y-3">
+          <h2 className="text-sm font-semibold">
+            Жагсаалт руу нэмэх
+          </h2>
+          {setlists.length === 0 ? (
+            <div className="text-xs text-gray-400 space-y-1">
+              <p>Танд одоогоор сетлист алга байна.</p>
+              <button
+                type="button"
+                onClick={() => router.push('/setlists/new')}
+                className="underline"
+              >
+                Шинэ жагсаалт үүсгэх
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-gray-500">
+                Сүүлийн үүсгэсэн жагсаалтуудаас сонгоод энэ дууг
+                нэмнэ.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <select
+                  value={targetSetlistId}
+                  onChange={(e) =>
+                    setTargetSetlistId(e.target.value)
+                  }
+                  className="border rounded px-2 py-1 text-sm"
+                >
+                  {setlists.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}{' '}
+                      {s.date ? `(${s.date})` : ''}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={handleAddToSetlist}
+                  disabled={addingToSetlist || !targetSetlistId}
+                  className="px-3 py-1 text-xs border rounded hover:bg-gray-100 hover:text-black disabled:opacity-40"
+                >
+                  {addingToSetlist
+                    ? 'Нэмэж байна…'
+                    : 'Жагсаалт руу нэмэх'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => router.push('/setlists/new')}
+                  className="text-xs underline"
+                >
+                  Шинэ жагсаалт үүсгэх
+                </button>
+              </div>
+
+              {addSetlistError && (
+                <p className="text-xs text-red-500">
+                  {addSetlistError}
+                </p>
+              )}
+              {addSetlistMessage && (
+                <p className="text-xs text-emerald-400">
+                  {addSetlistMessage}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
