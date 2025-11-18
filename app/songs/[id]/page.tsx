@@ -404,11 +404,11 @@ export default function SongDetailPage() {
     }
 
     const { error: insertError } = await supabase.from('setlist_songs').insert({
-      setlist_id: targetSetlistId,
-      song_id: song.id,
-      position: nextPosition,
-      key_override: effectiveKey || song.original_key,
-    })
+  setlist_id: targetSetlistId,
+  song_id: song!.id,       // ← song! гэж өгнө
+  position: nextPosition,
+  key_override: effectiveKey || song!.original_key,   // ← song!
+})
 
     if (insertError) {
       console.error(insertError)
