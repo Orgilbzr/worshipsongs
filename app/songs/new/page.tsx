@@ -47,13 +47,24 @@ export default function SongNewOrEditPage() {
     let ignore = false
 
     async function loadUser() {
-      const { data, error } = await supabase.auth.getUser()
-      if (error) {
-        console.error(error)
-      }
-      if (!ignore) {
-        setUser(data.user ?? null)
-        setLoadingUser(false)
+      try {
+        setLoadingUser(true)
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error('Auth session load error:', error)
+        }
+
+        if (!ignore) {
+          setUser(data.session?.user ?? null)
+          setLoadingUser(false)
+        }
+      } catch (e) {
+        console.error('Unexpected auth error:', e)
+        if (!ignore) {
+          setUser(null)
+          setLoadingUser(false)
+        }
       }
     }
 
@@ -64,6 +75,7 @@ export default function SongNewOrEditPage() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!ignore) {
         setUser(session?.user ?? null)
+        setLoadingUser(false)
       }
     })
 
@@ -73,17 +85,8 @@ export default function SongNewOrEditPage() {
     }
   }, [])
 
-  // --- songId өөрчлөгдөх болгонд form-ыг тохируулах ---
+  // --- Засах горимд бол тухайн дууг ачаалж form-ийг бөглөх ---
   useEffect(() => {
-    // NEW горим руу орж байгаа (эсвэл edit-ээс new рүү шилжиж байна)
-    if (!songId) {
-      setForm({ ...EMPTY_FORM })
-      setError(null)
-      setLoadingSong(false)
-      return
-    }
-
-    // EDIT горим – тухайн дууг ачаална
     let ignore = false
 
     async function loadSong() {
@@ -112,6 +115,14 @@ export default function SongNewOrEditPage() {
       }
 
       setLoadingSong(false)
+    }
+
+    if (!songId) {
+      // ← ШИНЭ ДУУ НЭМЭХ РҮҮ ОРЖ ИРСЭН ҮЕД ХУУЧИН FORM-ЫГ ЦЭВЭРЛЭНЭ
+      setForm(EMPTY_FORM)
+      setError(null)
+      setLoadingSong(false)
+      return
     }
 
     loadSong()
@@ -175,7 +186,6 @@ export default function SongNewOrEditPage() {
     const tempo = form.tempo.trim()
     const youtube_url = form.youtube_url.trim()
 
-    // Энгийн шалгалтууд
     if (!title) {
       setError('Дууны нэрийг оруулна уу.')
       return
