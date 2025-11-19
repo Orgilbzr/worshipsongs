@@ -1,7 +1,11 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import {
+  FormEvent,
+  useEffect,
+  useState,
+} from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
 
@@ -21,17 +25,24 @@ const EMPTY_FORM: SongForm = {
   youtube_url: '',
 }
 
-export default function SongNewPage() {
+export default function SongNewOrEditPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // --- query string-ээс id авах (засах горим уу, шинэ үү гэдгийг шийднэ) ---
+  const songIdParam = searchParams.get('id')
+  const songId = songIdParam && songIdParam.trim() !== '' ? songIdParam : null
+  const isEditMode = !!songId
 
   const [user, setUser] = useState<User | null>(null)
   const [loadingUser, setLoadingUser] = useState(true)
 
   const [form, setForm] = useState<SongForm>(EMPTY_FORM)
+  const [loadingSong, setLoadingSong] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // --- Нэвтэрсэн хэрэглэгч шалгах ---
+  // --- Нэвтэрсэн хэрэглэгч ачаалах ---
   useEffect(() => {
     let ignore = false
 
@@ -62,11 +73,59 @@ export default function SongNewPage() {
     }
   }, [])
 
-  // --- Нэвтрээгүй бол буцаах / мессеж ---
-  if (loadingUser) {
+  // --- songId өөрчлөгдөх болгонд form-ыг тохируулах ---
+  useEffect(() => {
+    // NEW горим руу орж байгаа (эсвэл edit-ээс new рүү шилжиж байна)
+    if (!songId) {
+      setForm({ ...EMPTY_FORM })
+      setError(null)
+      setLoadingSong(false)
+      return
+    }
+
+    // EDIT горим – тухайн дууг ачаална
+    let ignore = false
+
+    async function loadSong() {
+      setLoadingSong(true)
+      setError(null)
+
+      const { data, error } = await supabase
+        .from('songs')
+        .select('id, title, original_key, tempo, lyrics, youtube_url')
+        .eq('id', songId)
+        .single()
+
+      if (ignore) return
+
+      if (error) {
+        console.error(error)
+        setError('Дууг ачаалах үед алдаа гарлаа.')
+      } else if (data) {
+        setForm({
+          title: data.title ?? '',
+          original_key: data.original_key ?? '',
+          tempo: data.tempo ?? '',
+          lyrics: data.lyrics ?? '',
+          youtube_url: data.youtube_url ?? '',
+        })
+      }
+
+      setLoadingSong(false)
+    }
+
+    loadSong()
+
+    return () => {
+      ignore = true
+    }
+  }, [songId])
+
+  // --- Төлөвүүдээр нь дэлгэц шийдье ---
+  if (loadingUser || (isEditMode && loadingSong)) {
     return (
       <p className="text-sm text-slate-500">
-        Нэвтрэлтийг шалгаж байна…
+        Дууны мэдээлэл ачаалж байна…
       </p>
     )
   }
@@ -74,9 +133,13 @@ export default function SongNewPage() {
   if (!user) {
     return (
       <div className="space-y-3">
-        <h1 className="text-2xl font-semibold">Шинэ дуу нэмэх</h1>
+        <h1 className="text-2xl font-semibold">
+          {isEditMode ? 'Дуу засах' : 'Шинэ дуу нэмэх'}
+        </h1>
         <p className="text-sm text-red-500">
-          Шинэ дуу нэмэхийн тулд нэвтэрсэн байх шаардлагатай.
+          {isEditMode
+            ? 'Дуу засахын тулд нэвтэрсэн байх шаардлагатай.'
+            : 'Шинэ дуу нэмэхийн тулд нэвтэрсэн байх шаардлагатай.'}
         </p>
         <button
           onClick={() => router.push('/login')}
@@ -88,7 +151,7 @@ export default function SongNewPage() {
     )
   }
 
-  // --- Input өөрчлөх ---
+  // --- Form талбар шинэчлэх туслагч ---
   function updateField<K extends keyof SongForm>(
     key: K,
     value: SongForm[K]
@@ -99,7 +162,7 @@ export default function SongNewPage() {
     }))
   }
 
-  // --- Хадгалах submit ---
+  // --- Хадгалах / Шинэчлэх submit ---
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (saving) return
@@ -112,7 +175,7 @@ export default function SongNewPage() {
     const tempo = form.tempo.trim()
     const youtube_url = form.youtube_url.trim()
 
-    // Энгийн валидаци
+    // Энгийн шалгалтууд
     if (!title) {
       setError('Дууны нэрийг оруулна уу.')
       return
@@ -124,29 +187,58 @@ export default function SongNewPage() {
 
     setSaving(true)
 
-    const { data, error } = await supabase
-      .from('songs')
-      .insert({
-        title,
-        lyrics,
-        original_key: original_key || null,
-        tempo: tempo || null,
-        youtube_url: youtube_url || null,
-      })
-      .select('id')
-      .single()
+    try {
+      if (isEditMode && songId) {
+        // -------- UPDATE ----------
+        const { data, error } = await supabase
+          .from('songs')
+          .update({
+            title,
+            lyrics,
+            original_key: original_key || null,
+            tempo: tempo || null,
+            youtube_url: youtube_url || null,
+          })
+          .eq('id', songId)
+          .select('id')
+          .single()
 
-    if (error) {
-      console.error(error)
-      setError('Хадгалах үед алдаа гарлаа.')
+        if (error) {
+          console.error(error)
+          setError('Дуу шинэчлэх үед алдаа гарлаа.')
+          setSaving(false)
+          return
+        }
+
+        const updatedId = (data as { id: string }).id
+        router.push(`/songs/${updatedId}`)
+      } else {
+        // -------- INSERT ----------
+        const { data, error } = await supabase
+          .from('songs')
+          .insert({
+            title,
+            lyrics,
+            original_key: original_key || null,
+            tempo: tempo || null,
+            youtube_url: youtube_url || null,
+          })
+          .select('id')
+          .single()
+
+        if (error) {
+          console.error(error)
+          setError('Хадгалах үед алдаа гарлаа.')
+          setSaving(false)
+          return
+        }
+
+        const newId = (data as { id: string }).id
+        router.push(`/songs/${newId}`)
+      }
+    } finally {
       setSaving(false)
-      return
     }
-
-    const newId = (data as { id: string }).id
-
-    // Амжилттай болсон бол тухайн дууны дэлгэрэнгүй рүү очих
-    router.push(`/songs/${newId}`)
   }
 
   return (
@@ -159,7 +251,9 @@ export default function SongNewPage() {
         ← Дууны сан руу буцах
       </button>
 
-      <h1 className="text-2xl font-semibold">Шинэ дуу нэмэх</h1>
+      <h1 className="text-2xl font-semibold">
+        {isEditMode ? 'Дуу засах' : 'Шинэ дуу нэмэх'}
+      </h1>
 
       {error && (
         <p className="text-sm text-red-500">
@@ -230,8 +324,7 @@ export default function SongNewPage() {
 [D]Магтаалын [Em]үгс…`}
           />
           <p className="text-xs text-slate-500">
-            ChordPro хэлбэрээр аккордыг [] дотор бичиж болно. Жишээ:
-            {'  '}
+            ChordPro хэлбэрээр аккордыг [] дотор бичиж болно. Жишээ:{' '}
             <code className="font-mono">
               [G]Эзэн минь, би чамайг хайрлана
             </code>
@@ -252,14 +345,20 @@ export default function SongNewPage() {
           />
         </div>
 
-        {/* Хадгалах товч */}
+        {/* Хадгалах / Шинэчлэх товч */}
         <div className="pt-2">
           <button
             type="submit"
             disabled={saving}
             className="px-4 py-2 text-sm font-medium border border-slate-300 rounded bg-slate-900 text-white disabled:opacity-50"
           >
-            {saving ? 'Хадгалж байна…' : 'Хадгалах'}
+            {saving
+              ? isEditMode
+                ? 'Шинэчилж байна…'
+                : 'Хадгалж байна…'
+              : isEditMode
+              ? 'Шинэчлэх'
+              : 'Хадгалах'}
           </button>
         </div>
       </form>

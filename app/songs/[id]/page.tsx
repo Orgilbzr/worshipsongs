@@ -453,7 +453,8 @@ export default function SongDetailPage() {
 
         {user && (
           <button
-            onClick={() => router.push(`/songs/${song.id}/edit`)}
+            type="button"
+            onClick={() => router.push(`/songs/new?id=${song.id}`)}
             className="px-3 py-1 text-xs border border-slate-300 rounded hover:bg-slate-100"
           >
             Засах
