@@ -120,7 +120,7 @@ function transposeLyrics(
     .join('\n')
 }
 
-// -------------------- CHORDPRO LUXURY VIEW --------------------
+// -------------------- CHORDPRO VIEW --------------------
 
 type ViewLine =
   | { type: 'section'; label: string }
@@ -237,7 +237,7 @@ export default function SongDetailPage() {
     null
   )
 
-  // Хэрэглэгч (зөвхөн "Засах" болон "Жагсаалт руу нэмэх" блокт хэрэгтэй)
+  // Хэрэглэгч
   useEffect(() => {
     let ignore = false
 
@@ -333,7 +333,10 @@ export default function SongDetailPage() {
 
       const list = (data ?? []) as SimpleSetlist[]
       setSetlists(list)
-      if (!targetSetlistId && list.length > 0) {
+
+      if (!list.length) {
+        setTargetSetlistId('')
+      } else if (!targetSetlistId) {
         setTargetSetlistId(list[0].id)
       }
     }
@@ -346,7 +349,11 @@ export default function SongDetailPage() {
   }, [user])
 
   if (loading) {
-    return <p>Дууны мэдээлэл ачаалж байна…</p>
+    return (
+      <p className="text-sm text-slate-500">
+        Дууны мэдээлэл ачаалж байна…
+      </p>
+    )
   }
 
   if (error || !song) {
@@ -374,7 +381,7 @@ export default function SongDetailPage() {
 
   const viewLines = buildChordProView(baseLyrics)
 
-  // --- Сетлист рүү нэмэх handler (энд байж болно, song null биш болсон учраас) ---
+  // --- Жагсаалт руу нэмэх handler ---
   async function handleAddToSetlist() {
     if (!user) {
       setAddSetlistError('Жагсаалт руу нэмэхийн тулд нэвтэрсэн байх шаардлагатай.')
@@ -384,12 +391,15 @@ export default function SongDetailPage() {
       setAddSetlistError('Жагсаалт сонгоно уу.')
       return
     }
+    if (!song) {
+      setAddSetlistError('Дуу ачаалагдаагүй байна.')
+      return
+    }
 
     setAddingToSetlist(true)
     setAddSetlistError(null)
     setAddSetlistMessage(null)
 
-    // тухайн сетлистийн хамгийн сүүлийн position олно
     let nextPosition = 1
     const { data: posRows, error: posError } = await supabase
       .from('setlist_songs')
@@ -403,12 +413,14 @@ export default function SongDetailPage() {
       nextPosition = (p ?? 0) + 1
     }
 
-    const { error: insertError } = await supabase.from('setlist_songs').insert({
-  setlist_id: targetSetlistId,
-  song_id: song!.id,       // ← song! гэж өгнө
-  position: nextPosition,
-  key_override: effectiveKey || song!.original_key,   // ← song!
-})
+    const { error: insertError } = await supabase
+      .from('setlist_songs')
+      .insert({
+        setlist_id: targetSetlistId,
+        song_id: song.id,
+        position: nextPosition,
+        key_override: effectiveKey || song.original_key,
+      })
 
     if (insertError) {
       console.error(insertError)
@@ -433,7 +445,7 @@ export default function SongDetailPage() {
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-3xl font-semibold">{song.title}</h1>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-slate-600">
             Анхны тон: {song.original_key ?? '-'} · Темпо:{' '}
             {song.tempo ?? '-'}
           </div>
@@ -442,7 +454,7 @@ export default function SongDetailPage() {
         {user && (
           <button
             onClick={() => router.push(`/songs/${song.id}/edit`)}
-            className="px-3 py-1 text-xs border rounded hover:bg-gray-100 hover:text-black"
+            className="px-3 py-1 text-xs border border-slate-300 rounded hover:bg-slate-100"
           >
             Засах
           </button>
@@ -458,7 +470,7 @@ export default function SongDetailPage() {
           <select
             value={effectiveKey || ''}
             onChange={(e) => setCurrentKey(e.target.value || null)}
-            className="border rounded px-2 py-1 text-sm"
+            className="border border-slate-300 rounded px-2 py-1 text-sm"
           >
             <option value="">Анхны тон</option>
             {NOTES.map((n) => (
@@ -479,12 +491,12 @@ export default function SongDetailPage() {
                 setFontStep((s) => Math.max(0, s - 1))
               }
               disabled={fontStep === 0}
-              className="w-7 h-7 flex items-center justify-center border rounded text-sm disabled:opacity-40"
+              className="w-7 h-7 flex items-center justify-center border border-slate-300 rounded text-sm disabled:opacity-40"
               title="Жижигрүүлэх"
             >
               –
             </button>
-            <span className="text-xs text-gray-400 min-w-[70px] text-center">
+            <span className="text-xs text-slate-500 min-w-[70px] text-center">
               {fontLabels[fontStep]}
             </span>
             <button
@@ -493,7 +505,7 @@ export default function SongDetailPage() {
                 setFontStep((s) => Math.min(3, s + 1))
               }
               disabled={fontStep === 3}
-              className="w-7 h-7 flex items-center justify-center border rounded text-sm disabled:opacity-40"
+              className="w-7 h-7 flex items-center justify-center border border-slate-300 rounded text-sm disabled:opacity-40"
               title="Томруулах"
             >
               +
@@ -510,17 +522,17 @@ export default function SongDetailPage() {
             href={song.youtube_url}
             target="_blank"
             rel="noreferrer"
-            className="text-sm text-blue-400 underline break-all"
+            className="text-sm text-blue-600 underline break-all"
           >
             {song.youtube_url}
           </a>
         </div>
       )}
 
-      {/* ChordPro luxury view + dynamic font-size */}
+      {/* ChordPro view + dynamic font-size */}
       <div
         className={[
-          'border rounded px-3 py-3 font-mono bg-black/40 space-y-1 w-full overflow-x-auto',
+          'border border-slate-200 rounded px-3 py-3 font-mono bg-slate-50 space-y-1 w-full overflow-x-auto',
           fontClasses[fontStep],
         ].join(' ')}
       >
@@ -528,29 +540,29 @@ export default function SongDetailPage() {
           if (line.type === 'section') {
             const lower = line.label.toLowerCase()
             let badgeClass =
-              'text-gray-300 border-gray-600 bg-gray-900/40'
+              'text-slate-700 border-slate-300 bg-slate-100'
 
             if (lower.startsWith('verse')) {
               badgeClass =
-                'text-emerald-300 border-emerald-500/60 bg-emerald-900/20'
+                'text-emerald-700 border-emerald-300 bg-emerald-50'
             } else if (lower.startsWith('chorus')) {
               badgeClass =
-                'text-amber-300 border-amber-500/60 bg-amber-900/20'
+                'text-amber-700 border-amber-300 bg-amber-50'
             } else if (lower.startsWith('bridge')) {
               badgeClass =
-                'text-purple-300 border-purple-500/60 bg-purple-900/20'
+                'text-purple-700 border-purple-300 bg-purple-50'
             } else if (
               lower.startsWith('intro') ||
               lower.startsWith('outro') ||
               lower.startsWith('pre-chorus')
             ) {
               badgeClass =
-                'text-sky-300 border-sky-500/60 bg-sky-900/20'
+                'text-sky-700 border-sky-300 bg-sky-50'
             }
 
             return (
               <div key={idx} className="mt-4 mb-1">
-                <div className="pl-4 border-l-2 border-gray-700">
+                <div className="pl-4 border-l-2 border-slate-300">
                   <span
                     className={[
                       'inline-flex items-center px-2 py-0.5 border rounded-full text-[10px] font-semibold tracking-wide uppercase',
@@ -568,7 +580,7 @@ export default function SongDetailPage() {
             return (
               <div
                 key={idx}
-                className="text-xs text-gray-500 italic"
+                className="text-xs text-slate-500 italic"
               >
                 {line.text}
               </div>
@@ -578,7 +590,7 @@ export default function SongDetailPage() {
           if (line.type === 'chordLyrics') {
             return (
               <div key={idx} className="mb-1">
-                <div className="whitespace-pre text-blue-300 pl-4">
+                <div className="whitespace-pre text-blue-700 pl-4">
                   {line.chords}
                 </div>
                 <div className="whitespace-pre">
@@ -592,7 +604,7 @@ export default function SongDetailPage() {
             return (
               <div
                 key={idx}
-                className="whitespace-pre text-blue-300 pl-4"
+                className="whitespace-pre text-blue-700 pl-4"
               >
                 {line.chords}
               </div>
@@ -607,14 +619,14 @@ export default function SongDetailPage() {
         })}
       </div>
 
-      {/* --- Жагсаалт руу нэмэх блок (доод хэсэгт) --- */}
+      {/* --- Жагсаалт руу нэмэх блок --- */}
       {user && (
-        <div className="mt-6 border-t pt-4 space-y-3">
+        <div className="mt-6 border-t border-slate-200 pt-4 space-y-3">
           <h2 className="text-sm font-semibold">
             Жагсаалт руу нэмэх
           </h2>
           {setlists.length === 0 ? (
-            <div className="text-xs text-gray-400 space-y-1">
+            <div className="text-xs text-slate-500 space-y-1">
               <p>Танд одоогоор сетлист алга байна.</p>
               <button
                 type="button"
@@ -626,7 +638,7 @@ export default function SongDetailPage() {
             </div>
           ) : (
             <>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-500">
                 Сүүлийн үүсгэсэн жагсаалтуудаас сонгоод энэ дууг
                 нэмнэ.
               </p>
@@ -636,12 +648,11 @@ export default function SongDetailPage() {
                   onChange={(e) =>
                     setTargetSetlistId(e.target.value)
                   }
-                  className="border rounded px-2 py-1 text-sm"
+                  className="border border-slate-300 rounded px-2 py-1 text-sm"
                 >
                   {setlists.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name}{' '}
-                      {s.date ? `(${s.date})` : ''}
+                      {s.name} {s.date ? `(${s.date})` : ''}
                     </option>
                   ))}
                 </select>
@@ -650,7 +661,7 @@ export default function SongDetailPage() {
                   type="button"
                   onClick={handleAddToSetlist}
                   disabled={addingToSetlist || !targetSetlistId}
-                  className="px-3 py-1 text-xs border rounded hover:bg-gray-100 hover:text-black disabled:opacity-40"
+                  className="px-3 py-1 text-xs border border-slate-300 rounded hover:bg-slate-100 disabled:opacity-40"
                 >
                   {addingToSetlist
                     ? 'Нэмэж байна…'
@@ -672,7 +683,7 @@ export default function SongDetailPage() {
                 </p>
               )}
               {addSetlistMessage && (
-                <p className="text-xs text-emerald-400">
+                <p className="text-xs text-emerald-600">
                   {addSetlistMessage}
                 </p>
               )}

@@ -183,7 +183,6 @@ export default function SetlistDetailPage() {
     setReordering(true)
     setError(null)
 
-    // DB-д position-ийг хооронд нь солих – UNIQUE constraint эвдэхгүйгээр
     try {
       // 1. current -> түр -1
       let { error } = await supabase
@@ -218,7 +217,6 @@ export default function SetlistDetailPage() {
         throw error
       }
     } catch (e) {
-      // Алдаа гарвал UI-г refresh хийгээд буцааж авна
       setError('Дарааллыг хадгалахад алдаа гарлаа.')
       router.refresh()
     } finally {
@@ -229,19 +227,25 @@ export default function SetlistDetailPage() {
   // -------- Render --------
 
   if (loadingUser) {
-    return <p>Хэрэглэгчийн мэдээлэл ачаалж байна…</p>
+    return (
+      <p className="text-sm text-slate-500">
+        Хэрэглэгчийн мэдээлэл ачаалж байна…
+      </p>
+    )
   }
 
   if (!user) {
     return (
-      <div className="space-y-3">
-        <h1 className="text-2xl font-semibold">Жагсаалтын дэлгэрэнгүй</h1>
+      <div className="space-y-3 max-w-md">
+        <h1 className="text-2xl font-semibold">
+          Жагсаалтын дэлгэрэнгүй
+        </h1>
         <p className="text-sm text-red-500">
           Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү.
         </p>
         <button
           onClick={() => router.push('/login')}
-          className="px-4 py-2 rounded bg-black text-white text-sm"
+          className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm hover:bg-slate-100"
         >
           Нэвтрэх хуудас руу очих
         </button>
@@ -250,13 +254,19 @@ export default function SetlistDetailPage() {
   }
 
   if (loading) {
-    return <p>Жагсаалтын мэдээлэл ачаалж байна…</p>
+    return (
+      <p className="text-sm text-slate-500">
+        Жагсаалтын мэдээлэл ачаалж байна…
+      </p>
+    )
   }
 
   if (error && !setlist) {
     return (
-      <div className="space-y-3">
-        <h1 className="text-2xl font-semibold">Жагсаалтын дэлгэрэнгүй</h1>
+      <div className="space-y-3 max-w-md">
+        <h1 className="text-2xl font-semibold">
+          Жагсаалтын дэлгэрэнгүй
+        </h1>
         <p className="text-sm text-red-500">
           Алдаа: {error}
         </p>
@@ -285,19 +295,18 @@ export default function SetlistDetailPage() {
         </button>
 
         <div className="flex items-center gap-2">
-          {/* SERVICE VIEW товч */}
           <button
             onClick={() =>
               router.push(`/setlists/${setlist.id}/service`)
             }
-            className="px-3 py-1 text-xs border rounded bg-white text-black hover:bg-gray-100"
+            className="px-3 py-1 text-xs border border-slate-300 rounded bg-white text-slate-900 hover:bg-slate-100"
           >
             Service view
           </button>
 
           <button
             onClick={() => router.push('/setlists/new')}
-            className="px-3 py-1 text-xs border rounded hover:bg-gray-100 hover:text-black"
+            className="px-3 py-1 text-xs border border-slate-300 rounded bg-white text-slate-900 hover:bg-slate-100"
           >
             Шинэ жагсаалт
           </button>
@@ -306,7 +315,7 @@ export default function SetlistDetailPage() {
 
       <div className="space-y-1">
         <h1 className="text-3xl font-semibold">{setlist.name}</h1>
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-slate-600">
           Огноо: {setlist.date ?? '-'}
         </div>
       </div>
@@ -318,11 +327,11 @@ export default function SetlistDetailPage() {
       )}
 
       {songs.length === 0 ? (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-slate-500">
           Энэ жагсаалтад одоогоор дуу байхгүй байна.
         </p>
       ) : (
-        <div className="border rounded divide-y">
+        <div className="border border-slate-200 rounded divide-y divide-slate-200 bg-white">
           {songs.map((row, index) => {
             const effectiveKey =
               row.key_override || row.song.original_key || ''
@@ -336,10 +345,10 @@ export default function SetlistDetailPage() {
                     : ''
                   router.push(`/songs/${row.song.id}${keyParam}`)
                 }}
-                className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-gray-900 cursor-pointer"
+                className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-slate-100 cursor-pointer"
               >
                 {/* # */}
-                <div className="w-8 text-xs text-gray-500">
+                <div className="w-8 text-xs text-slate-500">
                   {index + 1}
                 </div>
 
@@ -351,7 +360,7 @@ export default function SetlistDetailPage() {
                       moveRow(row.id, 'up')
                     }}
                     disabled={reordering || index === 0}
-                    className="px-1 py-0.5 border rounded disabled:opacity-40"
+                    className="px-1 py-0.5 border border-slate-300 rounded disabled:opacity-40"
                     title="Дээш зөөх"
                   >
                     ↑
@@ -364,20 +373,20 @@ export default function SetlistDetailPage() {
                     disabled={
                       reordering || index === songs.length - 1
                     }
-                    className="px-1 py-0.5 border rounded disabled:opacity-40"
+                    className="px-1 py-0.5 border border-slate-300 rounded disabled:opacity-40"
                     title="Доош зөөх"
                   >
                     ↓
                   </button>
                 </div>
 
-                {/* Дууны мэдээлэл – мөрөн дээр дарвал дуу руу орно */}
+                {/* Дууны мэдээлэл */}
                 <div className="flex-1">
-                  <div className="font-medium">
+                  <div className="font-medium text-slate-900">
                     {row.song.title}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    Orginal Key:{' '}
+                  <div className="text-xs text-slate-600">
+                    Original key:{' '}
                     {row.song.original_key ?? '-'} · Жагсаалтанд:{' '}
                     {effectiveKey || '—'} · Tempo:{' '}
                     {row.song.tempo ?? '-'}
@@ -392,7 +401,7 @@ export default function SetlistDetailPage() {
                       handleRemove(row.id)
                     }}
                     disabled={removing === row.id}
-                    className="px-2 py-1 border rounded border-red-500 text-red-400 disabled:opacity-40"
+                    className="px-2 py-1 border border-red-500 rounded text-red-600 disabled:opacity-40 hover:bg-red-50"
                     title="Жагсаалтаас хасах"
                   >
                     ❌

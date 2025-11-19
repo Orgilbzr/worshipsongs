@@ -35,7 +35,7 @@ export default function SongsPage() {
   const [search, setSearch] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('newest')
 
-  // Хэрэглэгч – ЗӨВХӨН "шинэ дуу нэмэх" зэрэг үйлдэлд хэрэгтэй, харин харах хэсэгт blocking хийхгүй
+  // User
   useEffect(() => {
     let ignore = false
 
@@ -61,7 +61,7 @@ export default function SongsPage() {
     }
   }, [])
 
-  // Дууны сан – НЭВТРЭХ ШААРДЛАГАГҮЙ
+  // Songs (public)
   useEffect(() => {
     let ignore = false
 
@@ -154,7 +154,7 @@ export default function SongsPage() {
                 ? router.push('/songs/new')
                 : router.push('/login')
             }
-            className="px-3 py-1 text-xs border rounded bg-white text-black hover:bg-gray-100"
+            className="px-3 py-1 text-xs border border-slate-300 rounded bg-white text-slate-900 hover:bg-slate-100"
           >
             Шинэ дуу нэмэх
           </button>
@@ -166,7 +166,7 @@ export default function SongsPage() {
         <div className="flex items-center gap-2">
           <span>Хайх:</span>
           <input
-            className="border rounded px-2 py-1 bg-black text-sm"
+            className="border border-slate-300 rounded px-2 py-1 bg-white text-sm text-slate-900 placeholder:text-slate-400"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Нэр эсвэл үгээр…"
@@ -176,7 +176,7 @@ export default function SongsPage() {
         <div className="flex items-center gap-2">
           <span>Эрэмбэлэх:</span>
           <select
-            className="border rounded px-2 py-1 bg-black text-sm"
+            className="border border-slate-300 rounded px-2 py-1 bg-white text-sm text-slate-900"
             value={sortMode}
             onChange={(e) =>
               setSortMode(e.target.value as SortMode)
@@ -211,26 +211,26 @@ export default function SongsPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-slate-500">
           Дуунууд ачаалж байна…
         </p>
       ) : filteredAndSorted.length === 0 ? (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-slate-500">
           Хайлтад тохирох дуу алга.
         </p>
       ) : (
-        <div className="border rounded divide-y">
+        <div className="border border-slate-200 rounded divide-y divide-slate-200 bg-white">
           {filteredAndSorted.map((song) => (
             <div
               key={song.id}
               onClick={() => router.push(`/songs/${song.id}`)}
-              className="flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-900 cursor-pointer"
+              className="flex items-center justify-between px-3 py-2 text-sm hover:bg-slate-100 cursor-pointer"
             >
               <div className="space-y-0.5">
-                <div className="font-medium">
+                <div className="font-medium text-slate-900">
                   {song.title}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-slate-600">
                   Key: {song.original_key ?? '-'} · Tempo:{' '}
                   {song.tempo ?? '-'}
                 </div>

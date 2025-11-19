@@ -1,6 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import {
+  FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
@@ -76,9 +81,7 @@ export default function NewSetlistPage() {
 
       const { data, error } = await supabase
         .from('songs')
-        .select(
-          'id, title, original_key, tempo, lyrics'
-        )
+        .select('id, title, original_key, tempo, lyrics')
         .order('title', { ascending: true })
 
       if (ignore) return
@@ -133,7 +136,7 @@ export default function NewSetlistPage() {
   // ------------------------
   // Хадгалах
   // ------------------------
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
 
@@ -188,7 +191,9 @@ export default function NewSetlistPage() {
           song_id: songId,
           position: index + 1,
           key_override:
-            override && song?.original_key && override !== song.original_key
+            override &&
+            song?.original_key &&
+            override !== song.original_key
               ? override
               : null,
         }
@@ -220,12 +225,16 @@ export default function NewSetlistPage() {
   // ------------------------
 
   if (loadingUser) {
-    return <p>Хэрэглэгчийн мэдээлэл ачаалж байна…</p>
+    return (
+      <p className="text-sm text-slate-500">
+        Хэрэглэгчийн мэдээлэл ачаалж байна…
+      </p>
+    )
   }
 
   if (!user) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 max-w-md">
         <h1 className="text-2xl font-semibold">
           Шинэ жагсаалт үүсгэх
         </h1>
@@ -234,7 +243,7 @@ export default function NewSetlistPage() {
         </p>
         <button
           onClick={() => router.push('/login')}
-          className="px-4 py-2 rounded bg-black text-white text-sm"
+          className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm hover:bg-slate-100"
         >
           Нэвтрэх хуудас руу очих
         </button>
@@ -270,7 +279,7 @@ export default function NewSetlistPage() {
             Жагсаалтын нэр *
           </label>
           <input
-            className="w-full border rounded px-3 py-2 bg-black"
+            className="w-full border border-slate-300 rounded px-3 py-2 bg-white text-sm"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Sunday Service, Youth Night…"
@@ -287,7 +296,7 @@ export default function NewSetlistPage() {
             <div className="flex items-center gap-2 text-sm">
               <span>Хайх:</span>
               <input
-                className="border rounded px-2 py-1 bg-black text-sm"
+                className="border border-slate-300 rounded px-2 py-1 bg-white text-sm"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Нэр эсвэл үгээр хайх…"
@@ -296,19 +305,18 @@ export default function NewSetlistPage() {
           </div>
 
           {loadingSongs ? (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-slate-500">
               Дууны сан ачаалж байна…
             </p>
           ) : filteredSongs.length === 0 ? (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-slate-500">
               Хайлтад таарах дуу алга.
             </p>
           ) : (
-            <div className="border rounded divide-y max-h-[420px] overflow-auto">
+            <div className="border border-slate-200 rounded divide-y divide-slate-200 max-h-[420px] overflow-auto bg-white">
               {filteredSongs.map((song) => {
-                const checked = selectedSongIds.includes(
-                  song.id
-                )
+                const checked =
+                  selectedSongIds.includes(song.id)
                 const currentKey =
                   keyOverrides[song.id] ??
                   song.original_key ??
@@ -317,7 +325,7 @@ export default function NewSetlistPage() {
                 return (
                   <label
                     key={song.id}
-                    className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-gray-900"
+                    className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-slate-100"
                   >
                     <input
                       type="checkbox"
@@ -326,21 +334,21 @@ export default function NewSetlistPage() {
                       className="mt-0.5"
                     />
                     <div className="flex-1">
-                      <div className="font-medium">
+                      <div className="font-medium text-slate-900">
                         {song.title}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-slate-600">
                         Key:{' '}
                         {song.original_key ?? '-'} · Tempo:{' '}
                         {song.tempo ?? '-'}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-slate-500">
                         Key:
                       </span>
                       <input
-                        className="w-16 border rounded px-1 py-0.5 bg-black text-xs"
+                        className="w-16 border border-slate-300 rounded px-1 py-0.5 bg-white text-xs text-slate-900"
                         value={currentKey}
                         onChange={(e) =>
                           changeKey(song.id, e.target.value)
@@ -357,10 +365,9 @@ export default function NewSetlistPage() {
           )}
 
           {selectedSongIds.length > 0 && (
-            <p className="text-xs text-gray-400">
-              Сонгосон {selectedSongIds.length} дуу.
-              Дарааллаар нь дараалж сонгосон
-              дарааллын дагуу хадгалагдана.
+            <p className="text-xs text-slate-500">
+              Сонгосон {selectedSongIds.length} дуу. Дарааллын
+              дагуу хадгалагдана.
             </p>
           )}
         </div>
@@ -369,7 +376,7 @@ export default function NewSetlistPage() {
           <button
             type="submit"
             disabled={saving}
-            className="px-4 py-2 rounded bg-white text-black text-sm font-medium disabled:opacity-60"
+            className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm font-medium hover:bg-slate-100 disabled:opacity-60"
           >
             {saving
               ? 'Хадгалж байна…'

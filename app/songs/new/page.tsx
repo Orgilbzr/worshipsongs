@@ -110,11 +110,8 @@ function SongNewOrEditPageInner() {
     }
   }, [mode, songId, user])
 
-  function handleChange(
-    field: keyof SongForm,
-    value: string
-  ) {
-    setForm(prev => ({
+  function handleChange(field: keyof SongForm, value: string) {
+    setForm((prev) => ({
       ...prev,
       [field]: value,
     }))
@@ -162,12 +159,16 @@ function SongNewOrEditPageInner() {
   }
 
   if (loadingUser) {
-    return <p>Хэрэглэгчийн мэдээлэл ачаалж байна…</p>
+    return (
+      <p className="text-sm text-slate-500">
+        Хэрэглэгчийн мэдээлэл ачаалж байна…
+      </p>
+    )
   }
 
   if (!user) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 max-w-md">
         <h1 className="text-2xl font-semibold">
           {mode === 'new' ? 'Шинэ дуу нэмэх' : 'Дуу засах'}
         </h1>
@@ -176,7 +177,7 @@ function SongNewOrEditPageInner() {
         </p>
         <button
           onClick={() => router.push('/login')}
-          className="px-4 py-2 rounded bg-black text.white text-sm"
+          className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm hover:bg-slate-100"
         >
           Нэвтрэх хуудас руу очих
         </button>
@@ -214,41 +215,38 @@ function SongNewOrEditPageInner() {
           <input
             required
             value={form.title}
-            onChange={e =>
+            onChange={(e) =>
               handleChange('title', e.target.value)
             }
-            className="border rounded px-3 py-2 text-sm"
+            className="border border-slate-300 rounded px-3 py-2 text-sm bg-white"
           />
         </div>
 
-        <div className="flex gap-4">
-          <div className="flex-1 flex flex-col gap-1">
+        <div className="flex gap-4 flex-wrap">
+          <div className="flex-1 min-w-[140px] flex flex-col gap-1">
             <label className="text-sm font-medium">
               Анхны тон
             </label>
             <input
               value={form.original_key}
-              onChange={e =>
-                handleChange(
-                  'original_key',
-                  e.target.value
-                )
+              onChange={(e) =>
+                handleChange('original_key', e.target.value)
               }
-              className="border rounded px-3 py-2 text-sm"
+              className="border border-slate-300 rounded px-3 py-2 text-sm bg-white"
               placeholder="C, D, Eb ..."
             />
           </div>
 
-          <div className="flex-1 flex flex-col gap-1">
+          <div className="flex-1 min-w-[140px] flex flex-col gap-1">
             <label className="text-sm font-medium">
               Темпо
             </label>
             <input
               value={form.tempo}
-              onChange={e =>
+              onChange={(e) =>
                 handleChange('tempo', e.target.value)
               }
-              className="border rounded px-3 py-2 text-sm"
+              className="border border-slate-300 rounded px-3 py-2 text-sm bg-white"
               placeholder="Slow, 72 BPM ..."
             />
           </div>
@@ -260,13 +258,10 @@ function SongNewOrEditPageInner() {
           </label>
           <input
             value={form.youtube_url}
-            onChange={e =>
-              handleChange(
-                'youtube_url',
-                e.target.value
-              )
+            onChange={(e) =>
+              handleChange('youtube_url', e.target.value)
             }
-            className="border rounded px-3 py-2 text-sm"
+            className="border border-slate-300 rounded px-3 py-2 text-sm bg-white"
             placeholder="https://youtube.com/..."
           />
         </div>
@@ -278,20 +273,19 @@ function SongNewOrEditPageInner() {
           <textarea
             required
             value={form.lyrics}
-            onChange={e =>
+            onChange={(e) =>
               handleChange('lyrics', e.target.value)
             }
             rows={16}
-            className="border rounded px-3 py-2 text-sm font-mono"
+            className="border border-slate-300 rounded px-3 py-2 text-sm font-mono bg-slate-50"
           />
         </div>
 
-        {/* ЭНД ТОВЧИЙГ ЭНГИЙН БОЛГОСОН ХЭСЭГ */}
         <div className="flex justify-end">
           <button
             type="submit"
             disabled={saving}
-            className="px-4 py-2 rounded bg-white text-black text-sm font-medium disabled:opacity-60"
+            className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm font-medium hover:bg-slate-100 disabled:opacity-60"
           >
             {saving ? 'Хадгалж байна…' : 'Хадгалах'}
           </button>

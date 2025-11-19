@@ -101,7 +101,6 @@ export default function SetlistsPage() {
     setError(null)
 
     try {
-      // Эхлээд setlist_songs
       const { error: e1 } = await supabase
         .from('setlist_songs')
         .delete()
@@ -112,7 +111,6 @@ export default function SetlistsPage() {
         throw e1
       }
 
-      // Дараа нь setlists
       const { error: e2 } = await supabase
         .from('setlists')
         .delete()
@@ -123,7 +121,6 @@ export default function SetlistsPage() {
         throw e2
       }
 
-      // Local state-ээс авч хаяна
       setSetlists((prev) => prev.filter((s) => s.id !== setlist.id))
       setDeletingId(null)
     } catch (e) {
@@ -133,19 +130,23 @@ export default function SetlistsPage() {
   }
 
   if (loadingUser) {
-    return <p>Хэрэглэгчийн мэдээлэл ачаалж байна…</p>
+    return (
+      <p className="text-sm text-slate-500">
+        Хэрэглэгчийн мэдээлэл ачаалж байна…
+      </p>
+    )
   }
 
   if (!user) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 max-w-md">
         <h1 className="text-2xl font-semibold">Жагсаалтууд</h1>
         <p className="text-sm text-red-500">
           Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү.
         </p>
         <button
           onClick={() => router.push('/login')}
-          className="px-4 py-2 rounded bg-black text-white text-sm"
+          className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm hover:bg-slate-100"
         >
           Нэвтрэх хуудас руу очих
         </button>
@@ -159,7 +160,7 @@ export default function SetlistsPage() {
         <h1 className="text-2xl font-semibold">Жагсаалтууд</h1>
         <button
           onClick={() => router.push('/setlists/new')}
-          className="px-4 py-2 rounded bg-white text-black text-sm font-medium"
+          className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm font-medium hover:bg-slate-100"
         >
           Шинэ жагсаалт
         </button>
@@ -172,11 +173,11 @@ export default function SetlistsPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-slate-500">
           Жагсаалтууд ачаалж байна…
         </p>
       ) : setlists.length === 0 ? (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-slate-500">
           Одоогоор сетлист байхгүй байна.
         </p>
       ) : (
@@ -184,27 +185,29 @@ export default function SetlistsPage() {
           {setlists.map((s) => (
             <div
               key={s.id}
-              className="flex items-center justify-between border rounded px-4 py-3"
+              className="flex items-center justify-between border border-slate-200 rounded px-4 py-3 bg-white"
             >
               {/* Мөр дээр дарвал дэлгэрэнгүй рүү */}
               <div
                 className="flex-1 cursor-pointer"
                 onClick={() => router.push(`/setlists/${s.id}`)}
               >
-                <div className="font-medium">{s.name}</div>
-                <div className="text-xs text-gray-500">
+                <div className="font-medium text-slate-900">
+                  {s.name}
+                </div>
+                <div className="text-xs text-slate-600">
                   {s.date || ''}
                 </div>
               </div>
 
-              {/* Устгах товч – click bubble-ийг зогсооно */}
+              {/* Устгах товч */}
               <button
                 onClick={(e) => {
                   e.stopPropagation()
                   handleDeleteSetlist(s)
                 }}
                 disabled={deletingId === s.id}
-                className="ml-3 px-3 py-1 text-xs border rounded border-red-500 text-red-400 hover:bg-red-500 hover:text-black disabled:opacity-50"
+                className="ml-3 px-3 py-1 text-xs border border-red-500 rounded text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
               >
                 {deletingId === s.id ? 'Устгаж байна…' : 'Устгах'}
               </button>

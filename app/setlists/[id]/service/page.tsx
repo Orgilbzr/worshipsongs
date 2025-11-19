@@ -29,7 +29,18 @@ type ServiceSongRow = {
 // --------------- TRANSPOSE HELPERS ------------------
 
 const NOTES = [
-  'C','C#','D','D#','E','F','F#','G','G#','A','A#','B'
+  'C',
+  'C#',
+  'D',
+  'D#',
+  'E',
+  'F',
+  'F#',
+  'G',
+  'G#',
+  'A',
+  'A#',
+  'B',
 ] as const
 
 type Note = (typeof NOTES)[number]
@@ -37,7 +48,11 @@ type Note = (typeof NOTES)[number]
 function normalizeNote(input: string): Note | null {
   const up = input.trim().toUpperCase()
   const flat: Record<string, Note> = {
-    DB:'C#', EB:'D#', GB:'F#', AB:'G#', BB:'A#'
+    DB: 'C#',
+    EB: 'D#',
+    GB: 'F#',
+    AB: 'G#',
+    BB: 'A#',
   }
   if (NOTES.includes(up as Note)) return up as Note
   return flat[up] ?? null
@@ -67,7 +82,8 @@ function transposeChord(ch: string, fromKey: string, toKey: string) {
   if (!root) return ch
 
   const diff =
-    (NOTES.indexOf(to) - NOTES.indexOf(from) + NOTES.length) % NOTES.length
+    (NOTES.indexOf(to) - NOTES.indexOf(from) + NOTES.length) %
+    NOTES.length
 
   const newIndex =
     (NOTES.indexOf(root) + diff + NOTES.length) % NOTES.length
@@ -75,12 +91,16 @@ function transposeChord(ch: string, fromKey: string, toKey: string) {
   return NOTES[newIndex] + suf
 }
 
-function transposeLyrics(lyrics: string, fromKey: string | null, toKey: string) {
+function transposeLyrics(
+  lyrics: string,
+  fromKey: string | null,
+  toKey: string
+) {
   if (!fromKey || fromKey === toKey) return lyrics
 
   return lyrics
     .split('\n')
-    .map(line => {
+    .map((line) => {
       if (line.includes('[')) {
         return line.replace(/\[([^\]]+)\]/g, (full, inside) => {
           const parts = inside.split('/')
@@ -100,7 +120,7 @@ function transposeLyrics(lyrics: string, fromKey: string | null, toKey: string) 
 
       return line
         .split(/(\s+)/)
-        .map(part => {
+        .map((part) => {
           const t = part.trim()
           if (!t) return part
           return isChordToken(t)
@@ -115,11 +135,11 @@ function transposeLyrics(lyrics: string, fromKey: string | null, toKey: string) 
 // -------- CHORDPRO LUXURY VIEW HELPERS ---------
 
 type ViewLine =
-  | { type:'section'; label:string }
-  | { type:'comment'; text:string }
-  | { type:'chordLyrics'; chords:string; lyrics:string }
-  | { type:'chords'; chords:string }
-  | { type:'text'; text:string }
+  | { type: 'section'; label: string }
+  | { type: 'comment'; text: string }
+  | { type: 'chordLyrics'; chords: string; lyrics: string }
+  | { type: 'chords'; chords: string }
+  | { type: 'text'; text: string }
 
 function chordProLineToTwoLines(line: string) {
   let chords = ''
@@ -129,7 +149,7 @@ function chordProLineToTwoLines(line: string) {
   while (i < line.length) {
     const c = line[i]
     if (c === '[') {
-      const end = line.indexOf(']', i+1)
+      const end = line.indexOf(']', i + 1)
       if (end === -1) {
         lyrics += c
         chords += ' '
@@ -137,12 +157,12 @@ function chordProLineToTwoLines(line: string) {
         continue
       }
 
-      const chordText = line.slice(i+1, end).trim()
+      const chordText = line.slice(i + 1, end).trim()
 
       while (chords.length < lyrics.length) chords += ' '
       chords += chordText
 
-      i = end+1
+      i = end + 1
     } else {
       lyrics += c
       chords += ' '
@@ -160,35 +180,38 @@ function buildChordProView(text: string): ViewLine[] {
     const t = line.trim()
 
     if (t === '') {
-      out.push({ type:'text', text:'' })
+      out.push({ type: 'text', text: '' })
       continue
     }
 
     if (t.startsWith('{') && t.endsWith('}')) {
-      out.push({ type:'section', label:t.slice(1,-1).trim() })
+      out.push({ type: 'section', label: t.slice(1, -1).trim() })
       continue
     }
 
     if (t.startsWith('#') || t.startsWith(';')) {
-      out.push({ type:'comment', text:t.replace(/^([#;]\s*)/, '') })
+      out.push({
+        type: 'comment',
+        text: t.replace(/^([#;]\s*)/, ''),
+      })
       continue
     }
 
     const tokens = t.split(/\s+/)
-    if (tokens.every(x => isChordToken(x))) {
-      out.push({ type:'chords', chords:line })
+    if (tokens.every((x) => isChordToken(x))) {
+      out.push({ type: 'chords', chords: line })
       continue
     }
 
     if (line.includes('[') && line.includes(']')) {
       const { chords, lyrics } = chordProLineToTwoLines(line)
       if (chords.trim()) {
-        out.push({ type:'chordLyrics', chords, lyrics })
+        out.push({ type: 'chordLyrics', chords, lyrics })
         continue
       }
     }
 
-    out.push({ type:'text', text:line })
+    out.push({ type: 'text', text: line })
   }
   return out
 }
@@ -199,27 +222,44 @@ export default function SetlistServicePage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
 
-  const [user, setUser] = useState<User|null>(null)
-  const [setlist, setSetlist] = useState<Setlist|null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [setlist, setSetlist] = useState<Setlist | null>(null)
   const [songs, setSongs] = useState<ServiceSongRow[]>([])
   const [loading, setLoading] = useState(true)
 
   // FONT SIZE CONTROL (+ / –)
   const [fontStep, setFontStep] = useState(1)
-  const fontClasses = ['text-xs','text-sm','text-base','text-lg']
-  const fontLabels  = ['Жижиг','Дунд','Том','Маш том']
+  const fontClasses = ['text-xs', 'text-sm', 'text-base', 'text-lg']
+  const fontLabels = ['Жижиг', 'Дунд', 'Том', 'Маш том']
 
-  // Load user (optional)
+  // Хэрэглэгч
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user ?? null)
+    let ignore = false
+
+    async function loadUser() {
+      const { data } = await supabase.auth.getUser()
+      if (!ignore) {
+        setUser(data.user ?? null)
+      }
+    }
+
+    loadUser()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (!ignore) {
+        setUser(s?.user ?? null)
+      }
     })
-    supabase.auth.onAuthStateChange((_e, s) => {
-      setUser(s?.user ?? null)
-    })
+
+    return () => {
+      ignore = true
+      subscription.unsubscribe()
+    }
   }, [])
 
-  // Load setlist + lyrics
+  // Setlist + songs
   useEffect(() => {
     async function load() {
       setLoading(true)
@@ -257,11 +297,11 @@ export default function SetlistServicePage() {
       setSetlist({
         id: base.id,
         name: base.name,
-        date: base.date
+        date: base.date,
       })
 
       const rows = (base.setlist_songs || []) as ServiceSongRow[]
-      rows.sort((a,b) => a.position - b.position)
+      rows.sort((a, b) => a.position - b.position)
 
       setSongs(rows)
       setLoading(false)
@@ -270,12 +310,24 @@ export default function SetlistServicePage() {
     if (params.id) load()
   }, [params.id])
 
-  if (loading) return <p>Service view ачаалж байна…</p>
+  if (loading) {
+    return (
+      <p className="text-sm text-slate-500">
+        Service view ачаалж байна…
+      </p>
+    )
+  }
+
   if (!setlist) {
     return (
-      <div>
-        <p className="text-red-500">Жагсаалт олдсонгүй.</p>
-        <button onClick={() => router.push('/setlists')} className="underline text-sm">
+      <div className="space-y-2 max-w-md">
+        <p className="text-sm text-red-500">
+          Жагсаалт олдсонгүй.
+        </p>
+        <button
+          onClick={() => router.push('/setlists')}
+          className="underline text-sm"
+        >
           Буцах
         </button>
       </div>
@@ -284,7 +336,6 @@ export default function SetlistServicePage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-
       {/* Top bar */}
       <div className="flex items-center justify-between">
         <button
@@ -294,29 +345,34 @@ export default function SetlistServicePage() {
           ← Жагсаалтын дэлгэрэнгүй
         </button>
 
-        <div className="flex items-center gap-4 text-sm text-gray-400">
+        <div className="flex items-center gap-4 text-sm text-slate-600">
           <span>
-            {setlist.name} {setlist.date ? `(${setlist.date})` : ''}
+            {setlist.name}{' '}
+            {setlist.date ? `(${setlist.date})` : ''}
           </span>
 
           {/* FONT SIZE CONTROL */}
-          <div className="flex items-center gap-1 text-white">
+          <div className="flex items-center gap-1 text-slate-900">
             <button
-              className="w-7 h-7 border rounded flex items-center justify-center disabled:opacity-40"
+              className="w-7 h-7 border border-slate-300 rounded flex items-center justify-center disabled:opacity-40 hover:bg-slate-100"
               disabled={fontStep === 0}
-              onClick={() => setFontStep(s => Math.max(0, s - 1))}
+              onClick={() =>
+                setFontStep((s) => Math.max(0, s - 1))
+              }
             >
               –
             </button>
 
-            <span className="text-xs w-16 text-center">
+            <span className="text-xs w-16 text-center text-slate-600">
               {fontLabels[fontStep]}
             </span>
 
             <button
-              className="w-7 h-7 border rounded flex items-center justify-center disabled:opacity-40"
+              className="w-7 h-7 border border-slate-300 rounded flex items-center justify-center disabled:opacity-40 hover:bg-slate-100"
               disabled={fontStep === 3}
-              onClick={() => setFontStep(s => Math.min(3, s + 1))}
+              onClick={() =>
+                setFontStep((s) => Math.min(3, s + 1))
+              }
             >
               +
             </button>
@@ -331,41 +387,63 @@ export default function SetlistServicePage() {
           const effectiveKey = row.key_override || originalKey
           const text =
             originalKey && effectiveKey
-              ? transposeLyrics(row.song.lyrics || '', originalKey, effectiveKey)
-              : (row.song.lyrics || '')
+              ? transposeLyrics(
+                  row.song.lyrics || '',
+                  originalKey,
+                  effectiveKey
+                )
+              : row.song.lyrics || ''
 
           const view = buildChordProView(text)
 
           return (
             <section
               key={row.id}
-              className="border rounded px-4 py-4 bg-black/40 space-y-3"
+              className="border border-slate-200 rounded px-4 py-4 bg-white space-y-3"
             >
               {/* Header */}
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-xs text-gray-500">#{index + 1}</div>
-                  <h2 className="text-2xl font-semibold">{row.song.title}</h2>
-                  <div className="text-xs text-gray-400">
-                    Анхны тон: {originalKey || '-'} · Темпо: {row.song.tempo || '-'}
+                  <div className="text-xs text-slate-500">
+                    #{index + 1}
+                  </div>
+                  <h2 className="text-2xl font-semibold text-slate-900">
+                    {row.song.title}
+                  </h2>
+                  <div className="text-xs text-slate-600">
+                    Анхны тон: {originalKey || '-'} · Темпо:{' '}
+                    {row.song.tempo || '-'}
                   </div>
                 </div>
 
                 {/* Tone selector */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs">Тон:</span>
+                  <span className="text-xs text-slate-600">
+                    Тон:
+                  </span>
                   <select
                     value={effectiveKey}
-                    onChange={e => {
+                    onChange={(e) => {
                       const newKey = e.target.value || null
-                      row.key_override = newKey
-                      const updated = [...songs]
-                      setSongs(updated)
+                      setSongs((prev) =>
+                        prev.map((r) =>
+                          r.id === row.id
+                            ? {
+                                ...r,
+                                key_override: newKey,
+                              }
+                            : r
+                        )
+                      )
                     }}
-                    className="border rounded px-2 py-1 text-xs bg-black"
+                    className="border border-slate-300 rounded px-2 py-1 text-xs bg-white text-slate-900"
                   >
                     <option value="">Анхны</option>
-                    {NOTES.map(n => <option key={n} value={n}>{n}</option>)}
+                    {NOTES.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -373,28 +451,40 @@ export default function SetlistServicePage() {
               {/* LUXURY VIEW */}
               <div
                 className={[
-                  'border rounded px-3 py-3 font-mono bg-black/40 space-y-1 w-full overflow-x-auto',
+                  'border border-slate-200 rounded px-3 py-3 font-mono bg-slate-50 space-y-1 w-full overflow-x-auto',
                   fontClasses[fontStep],
                 ].join(' ')}
               >
                 {view.map((line, idx) => {
-
                   if (line.type === 'section') {
                     const s = line.label.toLowerCase()
-                    let cls = 'text-gray-300 border-gray-600 bg-gray-900/40'
+                    let cls =
+                      'text-slate-700 border-slate-300 bg-slate-100'
 
-                    if (s.startsWith('verse')) cls = 'text-emerald-300 border-emerald-600 bg-emerald-900/20'
-                    if (s.startsWith('chorus')) cls = 'text-amber-300 border-amber-600 bg-amber-900/20'
-                    if (s.startsWith('bridge')) cls = 'text-purple-300 border-purple-600 bg-purple-900/20'
-                    if (s.startsWith('intro') || s.startsWith('outro') || s.startsWith('pre-chorus'))
-                      cls = 'text-sky-300 border-sky-600 bg-sky-900/20'
+                    if (s.startsWith('verse')) {
+                      cls =
+                        'text-emerald-700 border-emerald-300 bg-emerald-50'
+                    } else if (s.startsWith('chorus')) {
+                      cls =
+                        'text-amber-700 border-amber-300 bg-amber-50'
+                    } else if (s.startsWith('bridge')) {
+                      cls =
+                        'text-purple-700 border-purple-300 bg-purple-50'
+                    } else if (
+                      s.startsWith('intro') ||
+                      s.startsWith('outro') ||
+                      s.startsWith('pre-chorus')
+                    ) {
+                      cls =
+                        'text-sky-700 border-sky-300 bg-sky-50'
+                    }
 
                     return (
                       <div key={idx} className="mt-4 mb-1">
                         <span
                           className={[
                             'px-2 py-0.5 border rounded-full text-[10px] font-semibold uppercase',
-                            cls
+                            cls,
                           ].join(' ')}
                         >
                           {line.label}
@@ -405,7 +495,10 @@ export default function SetlistServicePage() {
 
                   if (line.type === 'comment') {
                     return (
-                      <div key={idx} className="text-gray-400 italic text-xs">
+                      <div
+                        key={idx}
+                        className="text-xs text-slate-500 italic"
+                      >
                         {line.text}
                       </div>
                     )
@@ -414,7 +507,7 @@ export default function SetlistServicePage() {
                   if (line.type === 'chordLyrics') {
                     return (
                       <div key={idx}>
-                        <div className="whitespace-pre text-blue-300 pl-4">
+                        <div className="whitespace-pre text-blue-700 pl-4">
                           {line.chords}
                         </div>
                         <div className="whitespace-pre">
@@ -426,14 +519,20 @@ export default function SetlistServicePage() {
 
                   if (line.type === 'chords') {
                     return (
-                      <div key={idx} className="whitespace-pre text-blue-300 pl-4">
+                      <div
+                        key={idx}
+                        className="whitespace-pre text-blue-700 pl-4"
+                      >
                         {line.chords}
                       </div>
                     )
                   }
 
                   return (
-                    <div key={idx} className="whitespace-pre">
+                    <div
+                      key={idx}
+                      className="whitespace-pre text-slate-900"
+                    >
                       {line.text}
                     </div>
                   )
