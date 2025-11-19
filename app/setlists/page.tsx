@@ -23,15 +23,27 @@ export default function SetlistsPage() {
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  // Хэрэглэгч
+  // ---------------- ХЭРЭГЛЭГЧ АЧААЛАХ ----------------
   useEffect(() => {
     let ignore = false
 
     async function loadUser() {
-      const { data } = await supabase.auth.getUser()
-      if (!ignore) {
-        setUser(data.user ?? null)
-        setLoadingUser(false)
+      try {
+        setLoadingUser(true)
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) console.error('Auth session load error:', error)
+
+        if (!ignore) {
+          setUser(data.session?.user ?? null)
+          setLoadingUser(false)
+        }
+      } catch (e) {
+        console.error('Unexpected auth error:', e)
+        if (!ignore) {
+          setUser(null)
+          setLoadingUser(false)
+        }
       }
     }
 
@@ -40,7 +52,10 @@ export default function SetlistsPage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      if (!ignore) {
+        setUser(session?.user ?? null)
+        setLoadingUser(false)
+      }
     })
 
     return () => {
@@ -49,7 +64,7 @@ export default function SetlistsPage() {
     }
   }, [])
 
-  // Сетлистүүд
+  // ---------------- СЕТЛИСТҮҮД АЧААЛАХ ----------------
   useEffect(() => {
     if (!user) {
       setSetlists([])
@@ -82,16 +97,16 @@ export default function SetlistsPage() {
     }
 
     loadSetlists()
-
     return () => {
       ignore = true
     }
   }, [user])
 
+  // ---------------- СЕТЛИСТ УСТГАХ ----------------
   async function handleDeleteSetlist(setlist: Setlist) {
     if (
       !window.confirm(
-        `"${setlist.name}" жагсаалтыг бүрмөсөн устгах уу? (Жагсаалтын доторх холбоосууд бүгд устна, дуунууд өөрсдөө үлдэнэ.)`
+        `"${setlist.name}" жагсаалтыг бүрмөсөн устгах уу? (Доторх холбоосууд устна, дуунууд өөрсдөө үлдэнэ.)`
       )
     ) {
       return
@@ -106,34 +121,29 @@ export default function SetlistsPage() {
         .delete()
         .eq('setlist_id', setlist.id)
 
-      if (e1) {
-        console.error(e1)
-        throw e1
-      }
+      if (e1) throw e1
 
       const { error: e2 } = await supabase
         .from('setlists')
         .delete()
         .eq('id', setlist.id)
 
-      if (e2) {
-        console.error(e2)
-        throw e2
-      }
+      if (e2) throw e2
 
       setSetlists((prev) => prev.filter((s) => s.id !== setlist.id))
       setDeletingId(null)
     } catch (e) {
+      console.error(e)
       setError('Жагсаалтыг устгах үед алдаа гарлаа.')
       setDeletingId(null)
     }
   }
 
+  // ---------------- RENDER ----------------
+
   if (loadingUser) {
     return (
-      <p className="text-sm text-slate-500">
-        Хэрэглэгчийн мэдээлэл ачаалж байна…
-      </p>
+      <p className="text-sm text-slate-500">Хэрэглэгчийн мэдээлэл ачаалж байна…</p>
     )
   }
 
@@ -141,9 +151,7 @@ export default function SetlistsPage() {
     return (
       <div className="space-y-3 max-w-md">
         <h1 className="text-2xl font-semibold">Жагсаалтууд</h1>
-        <p className="text-sm text-red-500">
-          Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү.
-        </p>
+        <p className="text-sm text-red-500">Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү.</p>
         <button
           onClick={() => router.push('/login')}
           className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm hover:bg-slate-100"
@@ -166,20 +174,12 @@ export default function SetlistsPage() {
         </button>
       </div>
 
-      {error && (
-        <p className="text-sm text-red-500">
-          Алдаа: {error}
-        </p>
-      )}
+      {error && <p className="text-sm text-red-500">Алдаа: {error}</p>}
 
       {loading ? (
-        <p className="text-sm text-slate-500">
-          Жагсаалтууд ачаалж байна…
-        </p>
+        <p className="text-sm text-slate-500">Жагсаалтууд ачаалж байна…</p>
       ) : setlists.length === 0 ? (
-        <p className="text-sm text-slate-500">
-          Одоогоор сетлист байхгүй байна.
-        </p>
+        <p className="text-sm text-slate-500">Одоогоор сетлист байхгүй байна.</p>
       ) : (
         <div className="space-y-2">
           {setlists.map((s) => (
@@ -187,20 +187,14 @@ export default function SetlistsPage() {
               key={s.id}
               className="flex items-center justify-between border border-slate-200 rounded px-4 py-3 bg-white"
             >
-              {/* Мөр дээр дарвал дэлгэрэнгүй рүү */}
               <div
                 className="flex-1 cursor-pointer"
                 onClick={() => router.push(`/setlists/${s.id}`)}
               >
-                <div className="font-medium text-slate-900">
-                  {s.name}
-                </div>
-                <div className="text-xs text-slate-600">
-                  {s.date || ''}
-                </div>
+                <div className="font-medium text-slate-900">{s.name}</div>
+                <div className="text-xs text-slate-600">{s.date || ''}</div>
               </div>
 
-              {/* Устгах товч */}
               <button
                 onClick={(e) => {
                   e.stopPropagation()

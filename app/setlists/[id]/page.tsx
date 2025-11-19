@@ -43,10 +43,24 @@ export default function SetlistDetailPage() {
     let ignore = false
 
     async function loadUser() {
-      const { data } = await supabase.auth.getUser()
-      if (!ignore) {
-        setUser(data.user ?? null)
-        setLoadingUser(false)
+      try {
+        setLoadingUser(true)
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error('Auth session load error:', error)
+        }
+
+        if (!ignore) {
+          setUser(data.session?.user ?? null)
+          setLoadingUser(false)
+        }
+      } catch (e) {
+        console.error('Unexpected auth error:', e)
+        if (!ignore) {
+          setUser(null)
+          setLoadingUser(false)
+        }
       }
     }
 
@@ -55,7 +69,10 @@ export default function SetlistDetailPage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      if (!ignore) {
+        setUser(session?.user ?? null)
+        setLoadingUser(false)
+      }
     })
 
     return () => {
@@ -174,7 +191,7 @@ export default function SetlistDetailPage() {
     const currentPos = current.position
     const targetPos = target.position
 
-    // UI дээр эхлээд сольж үзүүлнэ
+    // UI дээр эхлээд сольж харуулна
     const newSongs = [...songs]
     newSongs[index] = { ...target, position: currentPos }
     newSongs[targetIndex] = { ...current, position: targetPos }
@@ -217,6 +234,7 @@ export default function SetlistDetailPage() {
         throw error
       }
     } catch (e) {
+      console.error(e)
       setError('Дарааллыг хадгалахад алдаа гарлаа.')
       router.refresh()
     } finally {
@@ -274,7 +292,7 @@ export default function SetlistDetailPage() {
           onClick={() => router.push('/setlists')}
           className="text-sm underline"
         >
-          Жагсаалтууд руу буцах
+          Жагсаалтруу буцах
         </button>
       </div>
     )
@@ -286,15 +304,16 @@ export default function SetlistDetailPage() {
 
   return (
     <div className="space-y-4 max-w-4xl">
-      <div className="flex items-center justify-between">
+      {/* Дээд мөр – буцах товч + баруун талд action-ийн товчнууд */}
+      <div className="flex items-center gap-2">
         <button
           onClick={() => router.push('/setlists')}
-          className="text-sm underline"
+          className="px-3 py-1 text-xs border border-slate-300 rounded bg-white text-slate-900 hover:bg-slate-100"
         >
-          ← Жагсаалтууд руу буцах
+          ← Жагсаалтруу буцах
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           <button
             onClick={() =>
               router.push(`/setlists/${setlist.id}/service`)
@@ -370,9 +389,7 @@ export default function SetlistDetailPage() {
                       e.stopPropagation()
                       moveRow(row.id, 'down')
                     }}
-                    disabled={
-                      reordering || index === songs.length - 1
-                    }
+                    disabled={reordering || index === songs.length - 1}
                     className="px-1 py-0.5 border border-slate-300 rounded disabled:opacity-40"
                     title="Доош зөөх"
                   >
@@ -387,7 +404,7 @@ export default function SetlistDetailPage() {
                   </div>
                   <div className="text-xs text-slate-600">
                     Original key:{' '}
-                    {row.song.original_key ?? '-'} · Жагсаалтанд:{' '}
+                    {row.song.original_key ?? '-'} · Жагсаалтад:{' '}
                     {effectiveKey || '—'} · Tempo:{' '}
                     {row.song.tempo ?? '-'}
                   </div>

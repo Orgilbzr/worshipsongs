@@ -35,15 +35,29 @@ export default function SongsPage() {
   const [search, setSearch] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('newest')
 
-  // User
+  // ---------------- ХЭРЭГЛЭГЧ ----------------
   useEffect(() => {
     let ignore = false
 
     async function loadUser() {
-      const { data } = await supabase.auth.getUser()
-      if (!ignore) {
-        setUser(data.user ?? null)
-        setLoadingUser(false)
+      try {
+        setLoadingUser(true)
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error('Auth session load error:', error)
+        }
+
+        if (!ignore) {
+          setUser(data.session?.user ?? null)
+          setLoadingUser(false)
+        }
+      } catch (e) {
+        console.error('Unexpected auth error:', e)
+        if (!ignore) {
+          setUser(null)
+          setLoadingUser(false)
+        }
       }
     }
 
@@ -52,7 +66,10 @@ export default function SongsPage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      if (!ignore) {
+        setUser(session?.user ?? null)
+        setLoadingUser(false)
+      }
     })
 
     return () => {
@@ -61,7 +78,7 @@ export default function SongsPage() {
     }
   }, [])
 
-  // Songs (public)
+  // ---------------- ДУУНУУД (public) ----------------
   useEffect(() => {
     let ignore = false
 
@@ -161,8 +178,10 @@ export default function SongsPage() {
         </div>
       </div>
 
-      {/* Хайлт + эрэмбэлэлт */}
+      {/* Хайлт + Эрэмбэлэлт */}
       <div className="flex flex-wrap items-center gap-3 text-sm">
+        
+        {/* Хайлт */}
         <div className="flex items-center gap-2">
           <span>Хайх:</span>
           <input
@@ -173,7 +192,8 @@ export default function SongsPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Эрэмбэлэх → Баруун тийш шахсан */}
+        <div className="flex items-center gap-2 ml-auto">
           <span>Эрэмбэлэх:</span>
           <select
             className="border border-slate-300 rounded px-2 py-1 bg-white text-sm text-slate-900"
@@ -182,26 +202,15 @@ export default function SongsPage() {
               setSortMode(e.target.value as SortMode)
             }
           >
-            <option value="newest">
-              Шинээс → хуучин
-            </option>
-            <option value="oldest">
-              Хуучнаас → шинэ
-            </option>
-            <option value="title_asc">
-              Нэр A → Я
-            </option>
-            <option value="title_desc">
-              Нэр Я → A
-            </option>
-            <option value="key_asc">
-              Key A → G#
-            </option>
-            <option value="key_desc">
-              Key G# → A
-            </option>
+            <option value="newest">Шинээс → хуучин</option>
+            <option value="oldest">Хуучнаас → шинэ</option>
+            <option value="title_asc">Нэр A → Я</option>
+            <option value="title_desc">Нэр Я → A</option>
+            <option value="key_asc">Key A → G#</option>
+            <option value="key_desc">Key G# → A</option>
           </select>
         </div>
+
       </div>
 
       {error && (

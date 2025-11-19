@@ -42,10 +42,24 @@ export default function NewSetlistPage() {
     let ignore = false
 
     async function loadUser() {
-      const { data } = await supabase.auth.getUser()
-      if (!ignore) {
-        setUser(data.user ?? null)
-        setLoadingUser(false)
+      try {
+        setLoadingUser(true)
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error('Auth session load error:', error)
+        }
+
+        if (!ignore) {
+          setUser(data.session?.user ?? null)
+          setLoadingUser(false)
+        }
+      } catch (e) {
+        console.error('Unexpected auth error:', e)
+        if (!ignore) {
+          setUser(null)
+          setLoadingUser(false)
+        }
       }
     }
 
@@ -54,7 +68,10 @@ export default function NewSetlistPage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      if (!ignore) {
+        setUser(session?.user ?? null)
+        setLoadingUser(false)
+      }
     })
 
     return () => {
@@ -262,7 +279,7 @@ export default function NewSetlistPage() {
           onClick={() => router.push('/setlists')}
           className="text-sm underline"
         >
-          ← Жагсаалтууд руу буцах
+          ← Жагсаалтруу буцах
         </button>
       </div>
 

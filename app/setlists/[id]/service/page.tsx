@@ -237,9 +237,21 @@ export default function SetlistServicePage() {
     let ignore = false
 
     async function loadUser() {
-      const { data } = await supabase.auth.getUser()
-      if (!ignore) {
-        setUser(data.user ?? null)
+      try {
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error('Auth session load error:', error)
+        }
+
+        if (!ignore) {
+          setUser(data.session?.user ?? null)
+        }
+      } catch (e) {
+        console.error('Unexpected auth error:', e)
+        if (!ignore) {
+          setUser(null)
+        }
       }
     }
 
@@ -287,6 +299,7 @@ export default function SetlistServicePage() {
         .single()
 
       if (error) {
+        console.error(error)
         setSetlist(null)
         setSongs([])
         setLoading(false)

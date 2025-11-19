@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
@@ -17,10 +16,23 @@ export default function Navbar() {
 
     async function loadUser() {
       setLoading(true)
-      const { data } = await supabase.auth.getUser()
-      if (!ignore) {
-        setUser(data.user ?? null)
-        setLoading(false)
+      try {
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error('Error loading session', error)
+        }
+
+        if (!ignore) {
+          setUser(data.session?.user ?? null)
+          setLoading(false)
+        }
+      } catch (e) {
+        console.error('Unexpected auth error', e)
+        if (!ignore) {
+          setUser(null)
+          setLoading(false)
+        }
       }
     }
 
@@ -29,7 +41,10 @@ export default function Navbar() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      if (!ignore) {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
     })
 
     return () => {
