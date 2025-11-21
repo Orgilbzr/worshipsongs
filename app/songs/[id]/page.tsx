@@ -361,7 +361,7 @@ export default function SongDetailPage() {
       <div className="space-y-3">
         <h1 className="text-2xl font-semibold">Дууны дэлгэрэнгүй</h1>
         <p className="text-sm text-red-500 dark:text-red-400">
-          {error ? `Алдаа: {error}` : 'Ийм дуу олдсонгүй.'}
+          {error ? `Алдаа: ${error}` : 'Ийм дуу олдсонгүй.'}
         </p>
         <button
           onClick={() => router.push('/songs')}
@@ -457,7 +457,7 @@ export default function SongDetailPage() {
       </button>
 
       {/* Гарчиг + 'Засах' товч */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify_between gap-3">
         <div className="space-y-1">
           <h1 className="text-3xl font-semibold">{song.title}</h1>
           <div className="text-sm text-slate-600 dark:text-slate-400">
@@ -484,9 +484,9 @@ export default function SongDetailPage() {
       </div>
 
       {/* Тон + фонт */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex_wrap items-center gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium">Одоогийн тон:</span>
+          <span className="text-sm font_medium">Одоогийн тон:</span>
           <select
             value={effectiveKey || ''}
             onChange={(e) => setCurrentKey(e.target.value || null)}
@@ -574,33 +574,43 @@ export default function SongDetailPage() {
         {viewLines.map((line, idx) => {
           if (line.type === 'section') {
             const lower = line.label.toLowerCase()
+
+            // Default (үл танигдсан секц) – light дээр илүү тод, цэвэр
             let badgeClass =
-              'text-slate-700 border-slate-300 bg-slate-100 dark:text-slate-200 dark:border-slate-500 dark:bg-slate-800'
+              'text-slate-900 border-slate-400 bg-white ' +
+              'dark:text-slate-200 dark:border-slate-500 dark:bg-slate-800'
 
             if (lower.startsWith('verse')) {
+              // VERSE – ногоон, light дээр цагаан фон + тод border
               badgeClass =
-                'text-emerald-700 border-emerald-300 bg-emerald-50 dark:text-emerald-200 dark:border-emerald-500 dark:bg-emerald-900/30'
+                'text-emerald-800 border-emerald-500 bg-white ' +
+                'dark:text-emerald-200 dark:border-emerald-500 dark:bg-emerald-900/30'
             } else if (lower.startsWith('chorus')) {
+              // CHORUS – улбар шар, цэвэр фон
               badgeClass =
-                'text-amber-700 border-amber-300 bg-amber-50 dark:text-amber-200 dark:border-amber-500 dark:bg-amber-900/30'
+                'text-amber-800 border-amber-500 bg-white ' +
+                'dark:text-amber-200 dark:border-amber-500 dark:bg-amber-900/30'
             } else if (lower.startsWith('bridge')) {
+              // BRIDGE – ягаан
               badgeClass =
-                'text-purple-700 border-purple-300 bg-purple-50 dark:text-purple-200 dark:border-purple-500 dark:bg-purple-900/30'
+                'text-purple-800 border-purple-500 bg-white ' +
+                'dark:text-purple-200 dark:border-purple-500 dark:bg-purple-900/30'
             } else if (
               lower.startsWith('intro') ||
               lower.startsWith('outro') ||
               lower.startsWith('pre-chorus')
             ) {
+              // INTRO / OUTRO / PRE-CHORUS – цэнхэр
               badgeClass =
-                'text-sky-700 border-sky-300 bg-sky-50 dark:text-sky-200 dark:border-sky-500 dark:bg-sky-900/30'
+                'text-sky-800 border-sky-500 bg-white ' +
+                'dark:text-sky-200 dark:border-sky-500 dark:bg-sky-900/30'
             }
 
-            // ← ЭНЭ ХЭСЭГТ ЗӨВХӨН ЗАЙГ АВСАН
             return (
               <div key={idx} className="mt-4 mb-1">
                 <span
                   className={[
-                    'inline-flex items-center px-2 py-0.5 border rounded-full text-[10px] font-semibold tracking-wide uppercase',
+                    'inline-flex items-center px-2 py-0.5 border rounded-full text-[12px] font-semibold tracking-wide uppercase',
                     badgeClass,
                   ].join(' ')}
                 >
@@ -624,7 +634,7 @@ export default function SongDetailPage() {
           if (line.type === 'chordLyrics') {
             return (
               <div key={idx} className="mb-1">
-                <div className="whitespace-pre text-blue-700 dark:text-blue-300 pl-4">
+                <div className="whitespace-pre text-blue-800 dark:text-blue-300 pl-0">
                   {line.chords}
                 </div>
                 <div className="whitespace-pre">
@@ -638,7 +648,7 @@ export default function SongDetailPage() {
             return (
               <div
                 key={idx}
-                className="whitespace-pre text-blue-700 dark:text-blue-300 pl-4"
+                className="whitespace-pre text-blue-800 dark:text-blue-300 pl-0"
               >
                 {line.chords}
               </div>
