@@ -94,7 +94,7 @@ function transposeChord(ch: string, fromKey: string, toKey: string) {
 function transposeLyrics(
   lyrics: string,
   fromKey: string | null,
-  toKey: string
+  toKey: string,
 ) {
   if (!fromKey || fromKey === toKey) return lyrics
 
@@ -110,7 +110,7 @@ function transposeLyrics(
               .map((p: string) =>
                 isChordToken(p.trim())
                   ? transposeChord(p.trim(), fromKey, toKey)
-                  : p
+                  : p,
               )
               .join('/') +
             ']'
@@ -231,32 +231,6 @@ export default function SetlistServicePage() {
   const [fontStep, setFontStep] = useState(1)
   const fontClasses = ['text-sm', 'text-base', 'text-lg', 'text-xl']
   const fontLabels = ['Жижиг', 'Дунд', 'Том', 'Маш том']
-
-  // FULLSCREEN STATE
-  const [isFullscreen, setIsFullscreen] = useState(false)
-
-  function toggleFullscreen() {
-    if (typeof document === 'undefined') return
-
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.().catch((e) => {
-        console.error('Fullscreen error:', e)
-      })
-    } else {
-      document.exitFullscreen?.().catch((e) => {
-        console.error('Exit fullscreen error:', e)
-      })
-    }
-  }
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    function onChange() {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-    document.addEventListener('fullscreenchange', onChange)
-    return () => document.removeEventListener('fullscreenchange', onChange)
-  }, [])
 
   // Хэрэглэгч
   useEffect(() => {
@@ -381,8 +355,8 @@ export default function SetlistServicePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--background)]">
-      {/* Дээд toolbar – fullscreen-д бас харагдана */}
-      <header className="flex items-center justify-between gap-4 px-4 py-2 border-b border-slate-200 dark:border-slate-800">
+      {/* Дээд toolbar */}
+      <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 border-b border-slate-200 dark:border-slate-800">
         <button
           onClick={() => router.push(`/setlists/${setlist.id}`)}
           className="
@@ -396,8 +370,8 @@ export default function SetlistServicePage() {
           ← Жагсаалтын дэлгэрэнгүй
         </button>
 
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-slate-600 dark:text-slate-400">
+        <div className="flex items-center gap-3 text-xs sm:text-sm">
+          <span className="text-slate-600 dark:text-slate-400 hidden sm:inline">
             {setlist.name} {setlist.date ? `(${setlist.date})` : ''}
           </span>
 
@@ -411,14 +385,12 @@ export default function SetlistServicePage() {
                 dark:border-slate-700 disabled:opacity-40
               "
               disabled={fontStep === 0}
-              onClick={() =>
-                setFontStep((s) => Math.max(0, s - 1))
-              }
+              onClick={() => setFontStep((s) => Math.max(0, s - 1))}
             >
               –
             </button>
 
-            <span className="text-xs w-16 text-center text-slate-600 dark:text-slate-400">
+            <span className="text-[11px] sm:text-xs w-16 text-center text-slate-600 dark:text-slate-400">
               {fontLabels[fontStep]}
             </span>
 
@@ -430,33 +402,17 @@ export default function SetlistServicePage() {
                 dark:border-slate-700 disabled:opacity-40
               "
               disabled={fontStep === 3}
-              onClick={() =>
-                setFontStep((s) => Math.min(3, s + 1))
-              }
+              onClick={() => setFontStep((s) => Math.min(3, s + 1))}
             >
               +
             </button>
           </div>
-
-          {/* FULLSCREEN TOGGLE */}
-          <button
-            onClick={toggleFullscreen}
-            className="
-              inline-flex items-center justify-center
-              px-3 py-1 text-xs font-medium rounded border
-              border-slate-300 bg-[var(--background)] text-[var(--foreground)]
-              hover:bg-slate-100 dark:hover:bg-slate-800
-              dark:border-slate-700
-            "
-          >
-            {isFullscreen ? 'Дэлгэцээс гарах' : 'Бүтэн дэлгэц'}
-          </button>
         </div>
       </header>
 
-      {/* Доод хэсэг – бүх контент, scroll-тай */}
-      <main className="flex-1 overflow-y-auto px-4 py-4">
-        <div className="max-w-5xl mx-auto space-y-10">
+      {/* Контент – мобайлд ээлтэй, scroll-тай */}
+      <main className="flex-1 overflow-y-auto px-2 sm:px-4 py-3 sm:py-4">
+        <div className="max-w-5xl mx-auto space-y-8 sm:space-y-10">
           {songs.map((row, index) => {
             const originalKey = row.song.original_key ?? ''
             const effectiveKey = row.key_override || originalKey
@@ -465,7 +421,7 @@ export default function SetlistServicePage() {
                 ? transposeLyrics(
                     row.song.lyrics || '',
                     originalKey,
-                    effectiveKey
+                    effectiveKey,
                   )
                 : row.song.lyrics || ''
 
@@ -475,21 +431,20 @@ export default function SetlistServicePage() {
               <section
                 key={row.id}
                 className="
-                  border rounded px-4 py-4 space-y-3
-                  border-slate-200 bg-[var(--background)]
-                  dark:border-slate-700
+                  rounded-lg px-3 sm:px-4 py-3 sm:py-4 space-y-3
+                  bg-[var(--background)] shadow-sm
                 "
               >
                 {/* Header */}
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-3 sm:gap-4">
                   <div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
                       #{index + 1}
                     </div>
-                    <h2 className="text-2xl font-semibold text-[var(--foreground)]">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-[var(--foreground)]">
                       {row.song.title}
                     </h2>
-                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                    <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">
                       Анхны тон: {originalKey || '-'} · Темпо:{' '}
                       {row.song.tempo || '-'}
                     </div>
@@ -497,7 +452,7 @@ export default function SetlistServicePage() {
 
                   {/* Tone selector */}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                    <span className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">
                       Тон:
                     </span>
                     <select
@@ -511,12 +466,12 @@ export default function SetlistServicePage() {
                                   ...r,
                                   key_override: newKey,
                                 }
-                              : r
-                          )
+                              : r,
+                          ),
                         )
                       }}
                       className="
-                        border rounded px-2 py-1 text-xs
+                        border rounded px-2 py-1 text-[11px] sm:text-xs
                         border-slate-300 bg-[var(--background)] text-[var(--foreground)]
                         dark:border-slate-700
                       "
@@ -531,7 +486,7 @@ export default function SetlistServicePage() {
                   </div>
                 </div>
 
-                {/* ChordPro view */}
+                {/* ChordPro view – доторх хүрээ хэвээр, илүү тод аккорд */}
                 <div
                   className={[
                     'border rounded px-3 py-3 font-mono space-y-1 w-full overflow-x-auto',
@@ -543,28 +498,33 @@ export default function SetlistServicePage() {
                     if (line.type === 'section') {
                       const s = line.label.toLowerCase()
                       let cls =
-                        'text-slate-700 border-slate-300 bg-slate-100 dark:text-slate-200 dark:border-slate-500 dark:bg-slate-800'
+                        'text-slate-700 border-slate-300 bg-slate-100 ' +
+                        'dark:text-slate-200 dark:border-slate-500 dark:bg-slate-800'
 
                       if (s.startsWith('verse')) {
                         cls =
-                          'text-emerald-700 border-emerald-300 bg-emerald-50 dark:text-emerald-200 dark:border-emerald-500 dark:bg-emerald-900/30'
+                          'text-emerald-700 border-emerald-300 bg-emerald-50 ' +
+                          'dark:text-emerald-200 dark:border-emerald-500 dark:bg-emerald-900/30'
                       } else if (s.startsWith('chorus')) {
                         cls =
-                          'text-amber-700 border-amber-300 bg-amber-50 dark:text-amber-200 dark:border-amber-500 dark:bg-amber-900/30'
+                          'text-amber-700 border-amber-300 bg-amber-50 ' +
+                          'dark:text-amber-200 dark:border-amber-500 dark:bg-amber-900/30'
                       } else if (s.startsWith('bridge')) {
                         cls =
-                          'text-purple-700 border-purple-300 bg-purple-50 dark:text-purple-200 dark:border-purple-500 dark:bg-purple-900/30'
+                          'text-purple-700 border-purple-300 bg-purple-50 ' +
+                          'dark:text-purple-200 dark:border-purple-500 dark:bg-purple-900/30'
                       } else if (
                         s.startsWith('intro') ||
                         s.startsWith('outro') ||
                         s.startsWith('pre-chorus')
                       ) {
                         cls =
-                          'text-sky-700 border-sky-300 bg-sky-50 dark:text-sky-200 dark:border-sky-500 dark:bg-sky-900/30'
+                          'text-sky-700 border-sky-300 bg-sky-50 ' +
+                          'dark:text-sky-200 dark:border-sky-500 dark:bg-sky-900/30'
                       }
 
                       return (
-                        <div key={idx} className="mt-4 mb-1">
+                        <div key={idx} className="mt-3 mb-1">
                           <span
                             className={[
                               'px-2 py-0.5 border rounded-full text-[10px] font-semibold uppercase',
@@ -590,8 +550,8 @@ export default function SetlistServicePage() {
 
                     if (line.type === 'chordLyrics') {
                       return (
-                        <div key={idx}>
-                          <div className="whitespace-pre text-blue-700 dark:text-blue-300 pl-4">
+                        <div key={idx} className="mb-1">
+                          <div className="whitespace-pre text-blue-700 dark:text-blue-300 pl-2 sm:pl-4">
                             {line.chords}
                           </div>
                           <div className="whitespace-pre">
@@ -605,7 +565,7 @@ export default function SetlistServicePage() {
                       return (
                         <div
                           key={idx}
-                          className="whitespace-pre text-blue-700 dark:text-blue-300 pl-4"
+                          className="whitespace-pre text-blue-700 dark:text-blue-300 pl-2 sm:pl-4"
                         >
                           {line.chords}
                         </div>
@@ -613,10 +573,7 @@ export default function SetlistServicePage() {
                     }
 
                     return (
-                      <div
-                        key={idx}
-                        className="whitespace-pre"
-                      >
+                      <div key={idx} className="whitespace-pre">
                         {line.text}
                       </div>
                     )
