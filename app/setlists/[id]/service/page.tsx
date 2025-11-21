@@ -335,7 +335,7 @@ export default function SetlistServicePage() {
     return (
       <div className="space-y-2 max-w-md">
         <p className="text-sm text-red-500 dark:text-red-400">
-          Жагсаалт олдсонгүй.
+          Алдаа: жагсаалт олдсонгүй.
         </p>
         <button
           onClick={() => router.push('/setlists')}
@@ -486,7 +486,7 @@ export default function SetlistServicePage() {
                   </div>
                 </div>
 
-                {/* ChordPro view – доторх хүрээ хэвээр, илүү тод аккорд */}
+                {/* ChordPro view – aligned main view */}
                 <div
                   className={[
                     'border rounded px-3 py-3 font-mono space-y-1 w-full overflow-x-auto',
