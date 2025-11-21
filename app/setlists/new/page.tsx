@@ -139,7 +139,7 @@ export default function NewSetlistPage() {
     setSelectedSongIds((prev) =>
       prev.includes(id)
         ? prev.filter((x) => x !== id)
-        : [...prev, id]
+        : [...prev, id],
     )
   }
 
@@ -175,11 +175,9 @@ export default function NewSetlistPage() {
     setSaving(true)
 
     try {
-      // Огноо: өнөөдрийн yyyy-mm-dd
       const today = new Date()
       const dateStr = today.toISOString().slice(0, 10)
 
-      // 1. Сетлист үүсгэх
       const { data: setlist, error: e1 } = await supabase
         .from('setlists')
         .insert({
@@ -198,7 +196,6 @@ export default function NewSetlistPage() {
 
       const setlistId = setlist.id as string
 
-      // 2. Сонгосон дуунуудыг setlist_songs руу оруулах
       const rows = selectedSongIds.map((songId, index) => {
         const song = songs.find((s) => s.id === songId)
         const override = keyOverrides[songId]?.trim()
@@ -223,13 +220,12 @@ export default function NewSetlistPage() {
       if (e2) {
         console.error(e2)
         setError(
-          'Жагсаалтад дуу нэмэх үед алдаа гарлаа. (Өгөгдлийн бааз руу орсон байж магадгүй, шалгаж үзээрэй.)'
+          'Жагсаалтад дуу нэмэх үед алдаа гарлаа. (Өгөгдлийн бааз руу орсон байж магадгүй, шалгаж үзээрэй.)',
         )
         setSaving(false)
         return
       }
 
-      // Амжилттай – тэр сетлист рүү очих
       router.push(`/setlists/${setlistId}`)
       router.refresh()
     } finally {
@@ -243,7 +239,7 @@ export default function NewSetlistPage() {
 
   if (loadingUser) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
         Хэрэглэгчийн мэдээлэл ачаалж байна…
       </p>
     )
@@ -255,12 +251,18 @@ export default function NewSetlistPage() {
         <h1 className="text-2xl font-semibold">
           Шинэ жагсаалт үүсгэх
         </h1>
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-red-500 dark:text-red-400">
           Энэ хуудсыг ашиглахын тулд нэвтэрнэ үү.
         </p>
         <button
           onClick={() => router.push('/login')}
-          className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm hover:bg-slate-100"
+          className="
+            inline-flex items-center justify-center
+            px-3 py-1 text-xs font-medium rounded border
+            border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+            hover:bg-slate-100 dark:hover:bg-slate-800
+            dark:border-slate-700
+          "
         >
           Нэвтрэх хуудас руу очих
         </button>
@@ -270,21 +272,29 @@ export default function NewSetlistPage() {
 
   return (
     <div className="max-w-3xl space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">
           Шинэ жагсаалт үүсгэх
         </h1>
         <button
           type="button"
           onClick={() => router.push('/setlists')}
-          className="text-sm underline"
+          className="
+            inline-flex items-center gap-2
+            px-3 py-1 text-xs font-medium rounded border
+            border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+            hover:bg-slate-100 dark:hover:bg-slate-800
+            dark:border-slate-700
+          "
         >
-          ← Жагсаалтруу буцах
+          Жагсаалтруу буцах
         </button>
       </div>
 
       {error && (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-500 dark:text-red-400">
+          {error}
+        </p>
       )}
 
       <form
@@ -296,14 +306,17 @@ export default function NewSetlistPage() {
             Жагсаалтын нэр *
           </label>
           <input
-            className="w-full border border-slate-300 rounded px-3 py-2 bg-white text-sm"
+            className="
+              w-full rounded border px-3 py-2 text-sm
+              border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+              placeholder:text-slate-400
+              dark:border-slate-700 dark:placeholder:text-slate-500
+            "
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Sunday Service, Youth Night…"
           />
         </div>
-
-        {/* Огноо сонгох талбар байхгүй – автоматаар өнөөдөр хадгална */}
 
         <div className="space-y-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -313,7 +326,12 @@ export default function NewSetlistPage() {
             <div className="flex items-center gap-2 text-sm">
               <span>Хайх:</span>
               <input
-                className="border border-slate-300 rounded px-2 py-1 bg-white text-sm"
+                className="
+                  border rounded px-2 py-1 text-sm
+                  border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                  placeholder:text-slate-400
+                  dark:border-slate-700 dark:placeholder:text-slate-500
+                "
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Нэр эсвэл үгээр хайх…"
@@ -322,18 +340,23 @@ export default function NewSetlistPage() {
           </div>
 
           {loadingSongs ? (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Дууны сан ачаалж байна…
             </p>
           ) : filteredSongs.length === 0 ? (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Хайлтад таарах дуу алга.
             </p>
           ) : (
-            <div className="border border-slate-200 rounded divide-y divide-slate-200 max-h-[420px] overflow-auto bg-white">
+            <div
+              className="
+                border rounded max-h-[420px] overflow-auto divide-y
+                border-slate-200 divide-slate-200 bg-[var(--background)]
+                dark:border-slate-700 dark:divide-slate-700
+              "
+            >
               {filteredSongs.map((song) => {
-                const checked =
-                  selectedSongIds.includes(song.id)
+                const checked = selectedSongIds.includes(song.id)
                 const currentKey =
                   keyOverrides[song.id] ??
                   song.original_key ??
@@ -342,7 +365,10 @@ export default function NewSetlistPage() {
                 return (
                   <label
                     key={song.id}
-                    className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-slate-100"
+                    className="
+                      group flex items-center gap-3 px-3 py-2 text-sm cursor-pointer
+                      hover:bg-slate-900 dark:hover:bg-slate-800
+                    "
                   >
                     <input
                       type="checkbox"
@@ -351,28 +377,44 @@ export default function NewSetlistPage() {
                       className="mt-0.5"
                     />
                     <div className="flex-1">
-                      <div className="font-medium text-slate-900">
+                      <div
+                        className="
+                          font-medium text-[var(--foreground)]
+                          group-hover:text-slate-50
+                        "
+                      >
                         {song.title}
                       </div>
-                      <div className="text-xs text-slate-600">
-                        Key:{' '}
-                        {song.original_key ?? '-'} · Tempo:{' '}
+                      <div
+                        className="
+                          text-xs text-slate-600 dark:text-slate-400
+                          group-hover:text-slate-200
+                        "
+                      >
+                        Key: {song.original_key ?? '-'} · Tempo:{' '}
                         {song.tempo ?? '-'}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-slate-500">
+                      <span
+                        className="
+                          text-xs text-slate-500 dark:text-slate-400
+                          group-hover:text-slate-200
+                        "
+                      >
                         Key:
                       </span>
                       <input
-                        className="w-16 border border-slate-300 rounded px-1 py-0.5 bg-white text-xs text-slate-900"
+                        className="
+                          w-16 rounded border px-1 py-0.5 text-xs
+                          border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                          dark:border-slate-700
+                        "
                         value={currentKey}
                         onChange={(e) =>
                           changeKey(song.id, e.target.value)
                         }
-                        placeholder={
-                          song.original_key ?? ''
-                        }
+                        placeholder={song.original_key ?? ''}
                       />
                     </div>
                   </label>
@@ -382,7 +424,7 @@ export default function NewSetlistPage() {
           )}
 
           {selectedSongIds.length > 0 && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Сонгосон {selectedSongIds.length} дуу. Дарааллын
               дагуу хадгалагдана.
             </p>
@@ -393,7 +435,13 @@ export default function NewSetlistPage() {
           <button
             type="submit"
             disabled={saving}
-            className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm font-medium hover:bg-slate-100 disabled:opacity-60"
+            className="
+              inline-flex items-center justify-center
+              px-3 py-1 text-xs font-medium rounded border
+              border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+              hover:bg-slate-100 dark:hover:bg-slate-800
+              dark:border-slate-700 disabled:opacity-60
+            "
           >
             {saving
               ? 'Хадгалж байна…'

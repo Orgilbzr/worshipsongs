@@ -1,32 +1,23 @@
 @import "tailwindcss";
 
-/* Үндсэн глобал light theme */
+/* Энд ямар ч theme variable хэрэггүй. Tailwind өөрөө удирдана. */
+
+/* Light theme – анхдагч */
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
-/* Tailwind theme variables override (optional) */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark theme – зөвхөн .dark class үед */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
-/* Dark mode автомат солилт бүрэн устгасан */
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-} */
-
-/* Глобал body — дандаа цайвар theme */
+/* Global body өнгийг CSS variable-аас авах */
 body {
-  background: #ffffff;
-  color: #171717;
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
   margin: 0;
   padding: 0;
 }

@@ -115,7 +115,7 @@ export default function SetlistDetailPage() {
               tempo
             )
           )
-        `
+        `,
         )
         .eq('id', params.id)
         .single()
@@ -191,7 +191,6 @@ export default function SetlistDetailPage() {
     const currentPos = current.position
     const targetPos = target.position
 
-    // UI дээр эхлээд сольж харуулна
     const newSongs = [...songs]
     newSongs[index] = { ...target, position: currentPos }
     newSongs[targetIndex] = { ...current, position: targetPos }
@@ -201,7 +200,6 @@ export default function SetlistDetailPage() {
     setError(null)
 
     try {
-      // 1. current -> түр -1
       let { error } = await supabase
         .from('setlist_songs')
         .update({ position: -1 })
@@ -212,7 +210,6 @@ export default function SetlistDetailPage() {
         throw error
       }
 
-      // 2. target -> currentPos
       ;({ error } = await supabase
         .from('setlist_songs')
         .update({ position: currentPos })
@@ -223,7 +220,6 @@ export default function SetlistDetailPage() {
         throw error
       }
 
-      // 3. current -> targetPos
       ;({ error } = await supabase
         .from('setlist_songs')
         .update({ position: targetPos })
@@ -246,7 +242,7 @@ export default function SetlistDetailPage() {
 
   if (loadingUser) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
         Хэрэглэгчийн мэдээлэл ачаалж байна…
       </p>
     )
@@ -258,12 +254,18 @@ export default function SetlistDetailPage() {
         <h1 className="text-2xl font-semibold">
           Жагсаалтын дэлгэрэнгүй
         </h1>
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-red-500 dark:text-red-400">
           Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү.
         </p>
         <button
           onClick={() => router.push('/login')}
-          className="px-4 py-2 rounded border border-slate-300 bg-white text-slate-900 text-sm hover:bg-slate-100"
+          className="
+            inline-flex items-center justify-center
+            px-3 py-1 text-xs font-medium rounded border
+            border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+            hover:bg-slate-100 dark:hover:bg-slate-800
+            dark:border-slate-700
+          "
         >
           Нэвтрэх хуудас руу очих
         </button>
@@ -273,7 +275,7 @@ export default function SetlistDetailPage() {
 
   if (loading) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
         Жагсаалтын мэдээлэл ачаалж байна…
       </p>
     )
@@ -285,14 +287,20 @@ export default function SetlistDetailPage() {
         <h1 className="text-2xl font-semibold">
           Жагсаалтын дэлгэрэнгүй
         </h1>
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-red-500 dark:text-red-400">
           Алдаа: {error}
         </p>
         <button
           onClick={() => router.push('/setlists')}
-          className="text-sm underline"
+          className="
+            inline-flex items-center gap-2
+            px-3 py-1 text-xs font-medium rounded border
+            border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+            hover:bg-slate-100 dark:hover:bg-slate-800
+            dark:border-slate-700
+          "
         >
-          Жагсаалтруу буцах
+          ← Жагсаалтруу буцах
         </button>
       </div>
     )
@@ -308,7 +316,13 @@ export default function SetlistDetailPage() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => router.push('/setlists')}
-          className="px-3 py-1 text-xs border border-slate-300 rounded bg-white text-slate-900 hover:bg-slate-100"
+          className="
+            inline-flex items-center gap-2
+            px-3 py-1 text-xs font-medium rounded border
+            border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+            hover:bg-slate-100 dark:hover:bg-slate-800
+            dark:border-slate-700
+          "
         >
           ← Жагсаалтруу буцах
         </button>
@@ -318,14 +332,26 @@ export default function SetlistDetailPage() {
             onClick={() =>
               router.push(`/setlists/${setlist.id}/service`)
             }
-            className="px-3 py-1 text-xs border border-slate-300 rounded bg-white text-slate-900 hover:bg-slate-100"
+            className="
+              inline-flex items-center justify-center
+              px-3 py-1 text-xs font-medium rounded border
+              border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+              hover:bg-slate-100 dark:hover:bg-slate-800
+              dark:border-slate-700
+            "
           >
             Service view
           </button>
 
           <button
             onClick={() => router.push('/setlists/new')}
-            className="px-3 py-1 text-xs border border-slate-300 rounded bg-white text-slate-900 hover:bg-slate-100"
+            className="
+              inline-flex items-center justify-center
+              px-3 py-1 text-xs font-medium rounded border
+              border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+              hover:bg-slate-100 dark:hover:bg-slate-800
+              dark:border-slate-700
+            "
           >
             Шинэ жагсаалт
           </button>
@@ -334,23 +360,29 @@ export default function SetlistDetailPage() {
 
       <div className="space-y-1">
         <h1 className="text-3xl font-semibold">{setlist.name}</h1>
-        <div className="text-sm text-slate-600">
+        <div className="text-sm text-slate-600 dark:text-slate-400">
           Огноо: {setlist.date ?? '-'}
         </div>
       </div>
 
       {error && (
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-red-500 dark:text-red-400">
           {error}
         </p>
       )}
 
       {songs.length === 0 ? (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           Энэ жагсаалтад одоогоор дуу байхгүй байна.
         </p>
       ) : (
-        <div className="border border-slate-200 rounded divide-y divide-slate-200 bg-white">
+        <div
+          className="
+            border rounded divide-y
+            border-slate-200 divide-slate-200 bg-[var(--background)]
+            dark:border-slate-700 dark:divide-slate-700
+          "
+        >
           {songs.map((row, index) => {
             const effectiveKey =
               row.key_override || row.song.original_key || ''
@@ -364,10 +396,18 @@ export default function SetlistDetailPage() {
                     : ''
                   router.push(`/songs/${row.song.id}${keyParam}`)
                 }}
-                className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-slate-100 cursor-pointer"
+                className="
+                  group flex items-center gap-3 px-3 py-2 text-sm cursor-pointer
+                  hover:bg-slate-900 dark:hover:bg-slate-800
+                "
               >
                 {/* # */}
-                <div className="w-8 text-xs text-slate-500">
+                <div
+                  className="
+                    w-8 text-xs text-slate-500 dark:text-slate-400
+                    group-hover:text-slate-200
+                  "
+                >
                   {index + 1}
                 </div>
 
@@ -379,7 +419,12 @@ export default function SetlistDetailPage() {
                       moveRow(row.id, 'up')
                     }}
                     disabled={reordering || index === 0}
-                    className="px-1 py-0.5 border border-slate-300 rounded disabled:opacity-40"
+                    className="
+                      px-1 py-0.5 rounded border text-xs
+                      border-slate-300 bg-[var(--background)]
+                      hover:bg-slate-100 dark:hover:bg-slate-800
+                      dark:border-slate-700 disabled:opacity-40
+                    "
                     title="Дээш зөөх"
                   >
                     ↑
@@ -390,7 +435,12 @@ export default function SetlistDetailPage() {
                       moveRow(row.id, 'down')
                     }}
                     disabled={reordering || index === songs.length - 1}
-                    className="px-1 py-0.5 border border-slate-300 rounded disabled:opacity-40"
+                    className="
+                      px-1 py-0.5 rounded border text-xs
+                      border-slate-300 bg-[var(--background)]
+                      hover:bg-slate-100 dark:hover:bg-slate-800
+                      dark:border-slate-700 disabled:opacity-40
+                    "
                     title="Доош зөөх"
                   >
                     ↓
@@ -399,10 +449,20 @@ export default function SetlistDetailPage() {
 
                 {/* Дууны мэдээлэл */}
                 <div className="flex-1">
-                  <div className="font-medium text-slate-900">
+                  <div
+                    className="
+                      font-medium text-[var(--foreground)]
+                      group-hover:text-slate-50
+                    "
+                  >
                     {row.song.title}
                   </div>
-                  <div className="text-xs text-slate-600">
+                  <div
+                    className="
+                      text-xs text-slate-600 dark:text-slate-400
+                      group-hover:text-slate-200
+                    "
+                  >
                     Original key:{' '}
                     {row.song.original_key ?? '-'} · Жагсаалтад:{' '}
                     {effectiveKey || '—'} · Tempo:{' '}
@@ -418,7 +478,12 @@ export default function SetlistDetailPage() {
                       handleRemove(row.id)
                     }}
                     disabled={removing === row.id}
-                    className="px-2 py-1 border border-red-500 rounded text-red-600 disabled:opacity-40 hover:bg-red-50"
+                    className="
+                      px-2 py-1 rounded border text-xs
+                      border-red-500 text-red-600 hover:bg-red-50
+                      disabled:opacity-40
+                      dark:border-red-500 dark:text-red-400 dark:hover:bg-red-900/30
+                    "
                     title="Жагсаалтаас хасах"
                   >
                     ❌

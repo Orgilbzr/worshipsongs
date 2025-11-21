@@ -132,7 +132,7 @@ function transposeLyrics(
     .join('\n')
 }
 
-// -------- CHORDPRO LUXURY VIEW HELPERS ---------
+// -------- CHORDPRO VIEW HELPERS ---------
 
 type ViewLine =
   | { type: 'section'; label: string }
@@ -325,7 +325,7 @@ export default function SetlistServicePage() {
 
   if (loading) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
         Service view ачаалж байна…
       </p>
     )
@@ -334,14 +334,20 @@ export default function SetlistServicePage() {
   if (!setlist) {
     return (
       <div className="space-y-2 max-w-md">
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-red-500 dark:text-red-400">
           Жагсаалт олдсонгүй.
         </p>
         <button
           onClick={() => router.push('/setlists')}
-          className="underline text-sm"
+          className="
+            inline-flex items-center gap-2
+            px-3 py-1 text-xs font-medium rounded border
+            border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+            hover:bg-slate-100 dark:hover:bg-slate-800
+            dark:border-slate-700
+          "
         >
-          Буцах
+          ← Жагсаалтруу буцах
         </button>
       </div>
     )
@@ -350,24 +356,35 @@ export default function SetlistServicePage() {
   return (
     <div className="max-w-5xl space-y-6">
       {/* Top bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <button
           onClick={() => router.push(`/setlists/${setlist.id}`)}
-          className="text-sm underline"
+          className="
+            inline-flex items-center gap-2
+            px-3 py-1 text-xs font-medium rounded border
+            border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+            hover:bg-slate-100 dark:hover:bg-slate-800
+            dark:border-slate-700
+          "
         >
           ← Жагсаалтын дэлгэрэнгүй
         </button>
 
-        <div className="flex items-center gap-4 text-sm text-slate-600">
-          <span>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-slate-600 dark:text-slate-400">
             {setlist.name}{' '}
             {setlist.date ? `(${setlist.date})` : ''}
           </span>
 
           {/* FONT SIZE CONTROL */}
-          <div className="flex items-center gap-1 text-slate-900">
+          <div className="flex items-center gap-1">
             <button
-              className="w-7 h-7 border border-slate-300 rounded flex items-center justify-center disabled:opacity-40 hover:bg-slate-100"
+              className="
+                w-7 h-7 flex items-center justify-center text-sm rounded border
+                border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                hover:bg-slate-100 dark:hover:bg-slate-800
+                dark:border-slate-700 disabled:opacity-40
+              "
               disabled={fontStep === 0}
               onClick={() =>
                 setFontStep((s) => Math.max(0, s - 1))
@@ -376,12 +393,17 @@ export default function SetlistServicePage() {
               –
             </button>
 
-            <span className="text-xs w-16 text-center text-slate-600">
+            <span className="text-xs w-16 text-center text-slate-600 dark:text-slate-400">
               {fontLabels[fontStep]}
             </span>
 
             <button
-              className="w-7 h-7 border border-slate-300 rounded flex items-center justify-center disabled:opacity-40 hover:bg-slate-100"
+              className="
+                w-7 h-7 flex items-center justify-center text-sm rounded border
+                border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                hover:bg-slate-100 dark:hover:bg-slate-800
+                dark:border-slate-700 disabled:opacity-40
+              "
               disabled={fontStep === 3}
               onClick={() =>
                 setFontStep((s) => Math.min(3, s + 1))
@@ -412,18 +434,22 @@ export default function SetlistServicePage() {
           return (
             <section
               key={row.id}
-              className="border border-slate-200 rounded px-4 py-4 bg-white space-y-3"
+              className="
+                border rounded px-4 py-4 space-y-3
+                border-slate-200 bg-[var(--background)]
+                dark:border-slate-700
+              "
             >
               {/* Header */}
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     #{index + 1}
                   </div>
-                  <h2 className="text-2xl font-semibold text-slate-900">
+                  <h2 className="text-2xl font-semibold text-[var(--foreground)]">
                     {row.song.title}
                   </h2>
-                  <div className="text-xs text-slate-600">
+                  <div className="text-xs text-slate-600 dark:text-slate-400">
                     Анхны тон: {originalKey || '-'} · Темпо:{' '}
                     {row.song.tempo || '-'}
                   </div>
@@ -431,7 +457,7 @@ export default function SetlistServicePage() {
 
                 {/* Tone selector */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-600">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
                     Тон:
                   </span>
                   <select
@@ -449,7 +475,11 @@ export default function SetlistServicePage() {
                         )
                       )
                     }}
-                    className="border border-slate-300 rounded px-2 py-1 text-xs bg-white text-slate-900"
+                    className="
+                      border rounded px-2 py-1 text-xs
+                      border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                      dark:border-slate-700
+                    "
                   >
                     <option value="">Анхны</option>
                     {NOTES.map((n) => (
@@ -461,10 +491,11 @@ export default function SetlistServicePage() {
                 </div>
               </div>
 
-              {/* LUXURY VIEW */}
+              {/* ChordPro view */}
               <div
                 className={[
-                  'border border-slate-200 rounded px-3 py-3 font-mono bg-slate-50 space-y-1 w-full overflow-x-auto',
+                  'border rounded px-3 py-3 font-mono space-y-1 w-full overflow-x-auto',
+                  'border-slate-200 bg-[var(--background)] dark:border-slate-700',
                   fontClasses[fontStep],
                 ].join(' ')}
               >
@@ -472,24 +503,24 @@ export default function SetlistServicePage() {
                   if (line.type === 'section') {
                     const s = line.label.toLowerCase()
                     let cls =
-                      'text-slate-700 border-slate-300 bg-slate-100'
+                      'text-slate-700 border-slate-300 bg-slate-100 dark:text-slate-200 dark:border-slate-500 dark:bg-slate-800'
 
                     if (s.startsWith('verse')) {
                       cls =
-                        'text-emerald-700 border-emerald-300 bg-emerald-50'
+                        'text-emerald-700 border-emerald-300 bg-emerald-50 dark:text-emerald-200 dark:border-emerald-500 dark:bg-emerald-900/30'
                     } else if (s.startsWith('chorus')) {
                       cls =
-                        'text-amber-700 border-amber-300 bg-amber-50'
+                        'text-amber-700 border-amber-300 bg-amber-50 dark:text-amber-200 dark:border-amber-500 dark:bg-amber-900/30'
                     } else if (s.startsWith('bridge')) {
                       cls =
-                        'text-purple-700 border-purple-300 bg-purple-50'
+                        'text-purple-700 border-purple-300 bg-purple-50 dark:text-purple-200 dark:border-purple-500 dark:bg-purple-900/30'
                     } else if (
                       s.startsWith('intro') ||
                       s.startsWith('outro') ||
                       s.startsWith('pre-chorus')
                     ) {
                       cls =
-                        'text-sky-700 border-sky-300 bg-sky-50'
+                        'text-sky-700 border-sky-300 bg-sky-50 dark:text-sky-200 dark:border-sky-500 dark:bg-sky-900/30'
                     }
 
                     return (
@@ -510,7 +541,7 @@ export default function SetlistServicePage() {
                     return (
                       <div
                         key={idx}
-                        className="text-xs text-slate-500 italic"
+                        className="text-xs text-slate-500 dark:text-slate-400 italic"
                       >
                         {line.text}
                       </div>
@@ -520,7 +551,7 @@ export default function SetlistServicePage() {
                   if (line.type === 'chordLyrics') {
                     return (
                       <div key={idx}>
-                        <div className="whitespace-pre text-blue-700 pl-4">
+                        <div className="whitespace-pre text-blue-700 dark:text-blue-300 pl-4">
                           {line.chords}
                         </div>
                         <div className="whitespace-pre">
@@ -534,7 +565,7 @@ export default function SetlistServicePage() {
                     return (
                       <div
                         key={idx}
-                        className="whitespace-pre text-blue-700 pl-4"
+                        className="whitespace-pre text-blue-700 dark:text-blue-300 pl-4"
                       >
                         {line.chords}
                       </div>
@@ -544,7 +575,7 @@ export default function SetlistServicePage() {
                   return (
                     <div
                       key={idx}
-                      className="whitespace-pre text-slate-900"
+                      className="whitespace-pre"
                     >
                       {line.text}
                     </div>

@@ -57,7 +57,7 @@ export default function SongNewOrEditPageInner() {
           setUser(data.session?.user ?? null)
           setLoadingUser(false)
         }
-      } catch (e) {
+      } catch (_) {
         if (!ignore) {
           setUser(null)
           setLoadingUser(false)
@@ -89,7 +89,6 @@ export default function SongNewOrEditPageInner() {
     let ignore = false
 
     if (!songId) {
-      // New mode → reset form
       setForm(EMPTY_FORM)
       setError(null)
       setLoadingSong(false)
@@ -125,7 +124,6 @@ export default function SongNewOrEditPageInner() {
     }
 
     loadSong()
-
     return () => {
       ignore = true
     }
@@ -136,17 +134,19 @@ export default function SongNewOrEditPageInner() {
   // -------------------------------
   if (loadingUser || (isEditMode && loadingSong)) {
     return (
-      <p className="text-sm text-slate-500">Ачаалж байна…</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        Ачаалж байна…
+      </p>
     )
   }
 
   if (!user) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 max-w-2xl">
         <h1 className="text-2xl font-semibold">
           {isEditMode ? 'Дуу засах' : 'Шинэ дуу нэмэх'}
         </h1>
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-red-500 dark:text-red-400">
           Нэвтэрсэн байх шаардлагатай.
         </p>
         <button
@@ -159,7 +159,6 @@ export default function SongNewOrEditPageInner() {
     )
   }
 
-  // update helper
   function updateField<K extends keyof SongForm>(
     key: K,
     value: SongForm[K]
@@ -195,6 +194,7 @@ export default function SongNewOrEditPageInner() {
     }
 
     setSaving(true)
+
     try {
       if (isEditMode && songId) {
         const { data, error } = await supabase
@@ -246,11 +246,19 @@ export default function SongNewOrEditPageInner() {
   // -------------------------------
   return (
     <div className="space-y-4 max-w-2xl">
+
+      {/* Бусад page-тэй адил "Буцах" товч */}
       <button
         onClick={() => router.push('/songs')}
-        className="text-sm underline"
+        className="
+          inline-flex items-center gap-2
+          px-3 py-1 text-xs font-medium rounded border
+          border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+          hover:bg-slate-100 dark:hover:bg-slate-800
+          dark:border-slate-700
+        "
       >
-        ← Дууны сан руу буцах
+        Дууны сан руу буцах
       </button>
 
       <h1 className="text-2xl font-semibold">
@@ -258,7 +266,9 @@ export default function SongNewOrEditPageInner() {
       </h1>
 
       {error && (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-500 dark:text-red-400">
+          {error}
+        </p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -271,12 +281,17 @@ export default function SongNewOrEditPageInner() {
             type="text"
             value={form.title}
             onChange={(e) => updateField('title', e.target.value)}
-            className="w-full border border-slate-300 rounded px-3 py-2 text-sm"
+            className="
+              w-full rounded border px-3 py-2 text-sm
+              border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+              placeholder:text-slate-400
+              dark:border-slate-700 dark:placeholder:text-slate-500
+            "
           />
         </div>
 
-        {/* Key and Tempo */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Key + Tempo */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1">
             <label className="block text-sm font-medium">
               Анхны тон
@@ -285,12 +300,13 @@ export default function SongNewOrEditPageInner() {
               type="text"
               value={form.original_key}
               onChange={(e) =>
-                updateField(
-                  'original_key',
-                  e.target.value.toUpperCase()
-                )
+                updateField('original_key', e.target.value.toUpperCase())
               }
-              className="w-full border border-slate-300 rounded px-3 py-2 text-sm"
+              className="
+                w-full rounded border px-3 py-2 text-sm
+                border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                dark:border-slate-700
+              "
             />
           </div>
 
@@ -302,7 +318,11 @@ export default function SongNewOrEditPageInner() {
               type="text"
               value={form.tempo}
               onChange={(e) => updateField('tempo', e.target.value)}
-              className="w-full border border-slate-300 rounded px-3 py-2 text-sm"
+              className="
+                w-full rounded border px-3 py-2 text-sm
+                border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                dark:border-slate-700
+              "
             />
           </div>
         </div>
@@ -315,7 +335,11 @@ export default function SongNewOrEditPageInner() {
           <textarea
             value={form.lyrics}
             onChange={(e) => updateField('lyrics', e.target.value)}
-            className="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono min-h-[240px]"
+            className="
+              w-full min-h-[240px] rounded border px-3 py-2 text-sm font-mono
+              border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+              dark:border-slate-700
+            "
           />
         </div>
 
@@ -327,17 +351,27 @@ export default function SongNewOrEditPageInner() {
           <input
             type="url"
             value={form.youtube_url}
-            onChange={(e) =>
-              updateField('youtube_url', e.target.value)
-            }
-            className="w-full border border-slate-300 rounded px-3 py-2 text-sm"
+            onChange={(e) => updateField('youtube_url', e.target.value)}
+            className="
+              w-full rounded border px-3 py-2 text-sm
+              border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+              placeholder:text-slate-400
+              dark:border-slate-700 dark:placeholder:text-slate-500
+            "
           />
         </div>
 
+        {/* Save – бусад товчтой адил загвар */}
         <button
           type="submit"
           disabled={saving}
-          className="px-4 py-2 text-sm font-medium border border-slate-300 rounded bg-slate-900 text-white disabled:opacity-50"
+          className="
+            inline-flex items-center justify-center
+            px-3 py-1 text-xs font-medium rounded border
+            border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+            hover:bg-slate-100 dark:hover:bg-slate-800
+            dark:border-slate-700 disabled:opacity-50
+          "
         >
           {saving
             ? isEditMode

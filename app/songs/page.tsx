@@ -88,9 +88,7 @@ export default function SongsPage() {
 
       const { data, error } = await supabase
         .from('songs')
-        .select(
-          'id, title, original_key, tempo, lyrics, created_at'
-        )
+        .select('id, title, original_key, tempo, lyrics, created_at')
 
       if (ignore) return
 
@@ -142,12 +140,12 @@ export default function SongsPage() {
         case 'key_asc':
           return (a.original_key ?? '').localeCompare(
             b.original_key ?? '',
-            'en'
+            'en',
           )
         case 'key_desc':
           return (b.original_key ?? '').localeCompare(
             a.original_key ?? '',
-            'en'
+            'en',
           )
         default:
           return 0
@@ -167,11 +165,11 @@ export default function SongsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() =>
-              user
-                ? router.push('/songs/new')
-                : router.push('/login')
+              user ? router.push('/songs/new') : router.push('/login')
             }
-            className="px-3 py-1 text-xs border border-slate-300 rounded bg-white text-slate-900 hover:bg-slate-100"
+            className="px-3 py-1 text-xs font-medium border rounded
+                       border-slate-300 bg-[var(--background)] hover:bg-slate-100
+                       dark:border-slate-700 dark:hover:bg-slate-800"
           >
             Шинэ дуу нэмэх
           </button>
@@ -180,12 +178,14 @@ export default function SongsPage() {
 
       {/* Хайлт + Эрэмбэлэлт */}
       <div className="flex flex-wrap items-center gap-3 text-sm">
-        
         {/* Хайлт */}
         <div className="flex items-center gap-2">
           <span>Хайх:</span>
           <input
-            className="border border-slate-300 rounded px-2 py-1 bg-white text-sm text-slate-900 placeholder:text-slate-400"
+            className="border rounded px-2 py-1 text-sm
+                       border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                       placeholder:text-slate-400
+                       dark:border-slate-700 dark:placeholder:text-slate-500"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Нэр эсвэл үгээр…"
@@ -196,11 +196,11 @@ export default function SongsPage() {
         <div className="flex items-center gap-2 ml-auto">
           <span>Эрэмбэлэх:</span>
           <select
-            className="border border-slate-300 rounded px-2 py-1 bg-white text-sm text-slate-900"
+            className="border rounded px-2 py-1 text-sm
+                       border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                       dark:border-slate-700"
             value={sortMode}
-            onChange={(e) =>
-              setSortMode(e.target.value as SortMode)
-            }
+            onChange={(e) => setSortMode(e.target.value as SortMode)}
           >
             <option value="newest">Шинээс → хуучин</option>
             <option value="oldest">Хуучнаас → шинэ</option>
@@ -210,38 +210,47 @@ export default function SongsPage() {
             <option value="key_desc">Key G# → A</option>
           </select>
         </div>
-
       </div>
 
       {error && (
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-red-500 dark:text-red-400">
           {error}
         </p>
       )}
 
       {loading ? (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           Дуунууд ачаалж байна…
         </p>
       ) : filteredAndSorted.length === 0 ? (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           Хайлтад тохирох дуу алга.
         </p>
       ) : (
-        <div className="border border-slate-200 rounded divide-y divide-slate-200 bg-white">
+        <div
+          className="border rounded bg-[var(--background)]
+                     border-slate-200 divide-y divide-slate-200
+                     dark:border-slate-700 dark:divide-slate-700"
+        >
           {filteredAndSorted.map((song) => (
             <div
               key={song.id}
               onClick={() => router.push(`/songs/${song.id}`)}
-              className="flex items-center justify-between px-3 py-2 text-sm hover:bg-slate-100 cursor-pointer"
+              className="group flex items-center justify-between px-3 py-2 text-sm cursor-pointer
+                         hover:bg-slate-900 dark:hover:bg-slate-800"
             >
               <div className="space-y-0.5">
-                <div className="font-medium text-slate-900">
+                <div
+                  className="font-medium text-[var(--foreground)]
+                             group-hover:text-slate-50"
+                >
                   {song.title}
                 </div>
-                <div className="text-xs text-slate-600">
-                  Key: {song.original_key ?? '-'} · Tempo:{' '}
-                  {song.tempo ?? '-'}
+                <div
+                  className="text-xs text-slate-600 dark:text-slate-400
+                             group-hover:text-slate-200"
+                >
+                  Key: {song.original_key ?? '-'} · Tempo: {song.tempo ?? '-'}
                 </div>
               </div>
             </div>

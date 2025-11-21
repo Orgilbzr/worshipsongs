@@ -346,11 +346,11 @@ export default function SongDetailPage() {
     return () => {
       ignore = true
     }
-  }, [user])
+  }, [user, targetSetlistId])
 
   if (loading) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
         Дууны мэдээлэл ачаалж байна…
       </p>
     )
@@ -360,14 +360,20 @@ export default function SongDetailPage() {
     return (
       <div className="space-y-3">
         <h1 className="text-2xl font-semibold">Дууны дэлгэрэнгүй</h1>
-        <p className="text-sm text-red-500">
-          {error ? `Алдаа: ${error}` : 'Ийм дуу олдсонгүй.'}
+        <p className="text-sm text-red-500 dark:text-red-400">
+          {error ? `Алдаа: {error}` : 'Ийм дуу олдсонгүй.'}
         </p>
         <button
           onClick={() => router.push('/songs')}
-          className="text-sm underline"
+          className="
+            inline-flex items-center gap-2
+            px-3 py-1 text-xs font-medium rounded border
+            border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+            hover:bg-slate-100 dark:hover:bg-slate-800
+            dark:border-slate-700
+          "
         >
-          Дууны сан руу буцах
+          ← Дууны сан руу буцах
         </button>
       </div>
     )
@@ -384,7 +390,9 @@ export default function SongDetailPage() {
   // --- Жагсаалт руу нэмэх handler ---
   async function handleAddToSetlist() {
     if (!user) {
-      setAddSetlistError('Жагсаалт руу нэмэхийн тулд нэвтэрсэн байх шаардлагатай.')
+      setAddSetlistError(
+        'Жагсаалт руу нэмэхийн тулд нэвтэрсэн байх шаардлагатай.'
+      )
       return
     }
     if (!targetSetlistId) {
@@ -434,18 +442,25 @@ export default function SongDetailPage() {
 
   return (
     <div className="space-y-4 max-w-3xl">
+      {/* Буцах товч – нэг загвар */}
       <button
         onClick={() => router.push('/songs')}
-        className="text-sm underline"
+        className="
+          inline-flex items-center gap-2
+          px-3 py-1 text-xs font-medium rounded border
+          border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+          hover:bg-slate-100 dark:hover:bg-slate-800
+          dark:border-slate-700
+        "
       >
-        ← Дууны сан руу буцах
+        Дууны сан руу буцах
       </button>
 
-      {/* Гарчиг + баруун дээд буланд "Засах" товч */}
+      {/* Гарчиг + 'Засах' товч */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-3xl font-semibold">{song.title}</h1>
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-slate-600 dark:text-slate-400">
             Анхны тон: {song.original_key ?? '-'} · Темпо:{' '}
             {song.tempo ?? '-'}
           </div>
@@ -455,23 +470,31 @@ export default function SongDetailPage() {
           <button
             type="button"
             onClick={() => router.push(`/songs/new?id=${song.id}`)}
-            className="px-3 py-1 text-xs border border-slate-300 rounded hover:bg-slate-100"
+            className="
+              inline-flex items-center justify-center
+              px-3 py-1 text-xs font-medium rounded border
+              border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+              hover:bg-slate-100 dark:hover:bg-slate-800
+              dark:border-slate-700
+            "
           >
             Засах
           </button>
         )}
       </div>
 
-      {/* Тон сонгох + фонтын хэмжээ */}
+      {/* Тон + фонт */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium">
-            Одоогийн тон:
-          </span>
+          <span className="text-sm font-medium">Одоогийн тон:</span>
           <select
             value={effectiveKey || ''}
             onChange={(e) => setCurrentKey(e.target.value || null)}
-            className="border border-slate-300 rounded px-2 py-1 text-sm"
+            className="
+              border rounded px-2 py-1 text-sm
+              border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+              dark:border-slate-700
+            "
           >
             <option value="">Анхны тон</option>
             {NOTES.map((n) => (
@@ -482,7 +505,7 @@ export default function SongDetailPage() {
           </select>
         </div>
 
-        {/* Фонтын хэмжээ – / + */}
+        {/* Фонтын хэмжээ */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Фонт:</span>
           <div className="inline-flex items-center gap-1">
@@ -492,12 +515,17 @@ export default function SongDetailPage() {
                 setFontStep((s) => Math.max(0, s - 1))
               }
               disabled={fontStep === 0}
-              className="w-7 h-7 flex items-center justify-center border border-slate-300 rounded text-sm disabled:opacity-40"
+              className="
+                w-7 h-7 flex items-center justify-center text-sm rounded border
+                border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                hover:bg-slate-100 dark:hover:bg-slate-800
+                dark:border-slate-700 disabled:opacity-40
+              "
               title="Жижигрүүлэх"
             >
               –
             </button>
-            <span className="text-xs text-slate-500 min-w-[70px] text-center">
+            <span className="text-xs text-slate-500 dark:text-slate-400 min-w-[70px] text-center">
               {fontLabels[fontStep]}
             </span>
             <button
@@ -506,7 +534,12 @@ export default function SongDetailPage() {
                 setFontStep((s) => Math.min(3, s + 1))
               }
               disabled={fontStep === 3}
-              className="w-7 h-7 flex items-center justify-center border border-slate-300 rounded text-sm disabled:opacity-40"
+              className="
+                w-7 h-7 flex items-center justify-center text-sm rounded border
+                border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                hover:bg-slate-100 dark:hover:bg-slate-800
+                dark:border-slate-700 disabled:opacity-40
+              "
               title="Томруулах"
             >
               +
@@ -515,7 +548,7 @@ export default function SongDetailPage() {
         </div>
       </div>
 
-      {/* Youtube линк (байвал) */}
+      {/* Youtube линк */}
       {song.youtube_url && (
         <div>
           <p className="text-sm font-medium mb-1">Youtube:</p>
@@ -523,17 +556,18 @@ export default function SongDetailPage() {
             href={song.youtube_url}
             target="_blank"
             rel="noreferrer"
-            className="text-sm text-blue-600 underline break-all"
+            className="text-sm text-blue-600 dark:text-blue-400 underline break-all"
           >
             {song.youtube_url}
           </a>
         </div>
       )}
 
-      {/* ChordPro view + dynamic font-size */}
+      {/* ChordPro view */}
       <div
         className={[
-          'border border-slate-200 rounded px-3 py-3 font-mono bg-slate-50 space-y-1 w-full overflow-x-auto',
+          'border rounded px-3 py-3 font-mono space-y-1 w-full overflow-x-auto',
+          'border-slate-200 bg-[var(--background)] dark:border-slate-700',
           fontClasses[fontStep],
         ].join(' ')}
       >
@@ -541,38 +575,37 @@ export default function SongDetailPage() {
           if (line.type === 'section') {
             const lower = line.label.toLowerCase()
             let badgeClass =
-              'text-slate-700 border-slate-300 bg-slate-100'
+              'text-slate-700 border-slate-300 bg-slate-100 dark:text-slate-200 dark:border-slate-500 dark:bg-slate-800'
 
             if (lower.startsWith('verse')) {
               badgeClass =
-                'text-emerald-700 border-emerald-300 bg-emerald-50'
+                'text-emerald-700 border-emerald-300 bg-emerald-50 dark:text-emerald-200 dark:border-emerald-500 dark:bg-emerald-900/30'
             } else if (lower.startsWith('chorus')) {
               badgeClass =
-                'text-amber-700 border-amber-300 bg-amber-50'
+                'text-amber-700 border-amber-300 bg-amber-50 dark:text-amber-200 dark:border-amber-500 dark:bg-amber-900/30'
             } else if (lower.startsWith('bridge')) {
               badgeClass =
-                'text-purple-700 border-purple-300 bg-purple-50'
+                'text-purple-700 border-purple-300 bg-purple-50 dark:text-purple-200 dark:border-purple-500 dark:bg-purple-900/30'
             } else if (
               lower.startsWith('intro') ||
               lower.startsWith('outro') ||
               lower.startsWith('pre-chorus')
             ) {
               badgeClass =
-                'text-sky-700 border-sky-300 bg-sky-50'
+                'text-sky-700 border-sky-300 bg-sky-50 dark:text-sky-200 dark:border-sky-500 dark:bg-sky-900/30'
             }
 
+            // ← ЭНЭ ХЭСЭГТ ЗӨВХӨН ЗАЙГ АВСАН
             return (
               <div key={idx} className="mt-4 mb-1">
-                <div className="pl-4 border-l-2 border-slate-300">
-                  <span
-                    className={[
-                      'inline-flex items-center px-2 py-0.5 border rounded-full text-[10px] font-semibold tracking-wide uppercase',
-                      badgeClass,
-                    ].join(' ')}
-                  >
-                    {line.label}
-                  </span>
-                </div>
+                <span
+                  className={[
+                    'inline-flex items-center px-2 py-0.5 border rounded-full text-[10px] font-semibold tracking-wide uppercase',
+                    badgeClass,
+                  ].join(' ')}
+                >
+                  {line.label}
+                </span>
               </div>
             )
           }
@@ -581,7 +614,7 @@ export default function SongDetailPage() {
             return (
               <div
                 key={idx}
-                className="text-xs text-slate-500 italic"
+                className="text-xs text-slate-500 dark:text-slate-400 italic"
               >
                 {line.text}
               </div>
@@ -591,7 +624,7 @@ export default function SongDetailPage() {
           if (line.type === 'chordLyrics') {
             return (
               <div key={idx} className="mb-1">
-                <div className="whitespace-pre text-blue-700 pl-4">
+                <div className="whitespace-pre text-blue-700 dark:text-blue-300 pl-4">
                   {line.chords}
                 </div>
                 <div className="whitespace-pre">
@@ -605,7 +638,7 @@ export default function SongDetailPage() {
             return (
               <div
                 key={idx}
-                className="whitespace-pre text-blue-700 pl-4"
+                className="whitespace-pre text-blue-700 dark:text-blue-300 pl-4"
               >
                 {line.chords}
               </div>
@@ -622,24 +655,24 @@ export default function SongDetailPage() {
 
       {/* --- Жагсаалт руу нэмэх блок --- */}
       {user && (
-        <div className="mt-6 border-t border-slate-200 pt-4 space-y-3">
+        <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
           <h2 className="text-sm font-semibold">
             Жагсаалт руу нэмэх
           </h2>
           {setlists.length === 0 ? (
-            <div className="text-xs text-slate-500 space-y-1">
+            <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
               <p>Танд одоогоор сетлист алга байна.</p>
               <button
                 type="button"
                 onClick={() => router.push('/setlists/new')}
-                className="underline"
+                className="text-xs underline"
               >
                 Шинэ жагсаалт үүсгэх
               </button>
             </div>
           ) : (
             <>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Сүүлийн үүсгэсэн жагсаалтуудаас сонгоод энэ дууг
                 нэмнэ.
               </p>
@@ -649,7 +682,11 @@ export default function SongDetailPage() {
                   onChange={(e) =>
                     setTargetSetlistId(e.target.value)
                   }
-                  className="border border-slate-300 rounded px-2 py-1 text-sm"
+                  className="
+                    border rounded px-2 py-1 text-sm
+                    border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                    dark:border-slate-700
+                  "
                 >
                   {setlists.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -662,7 +699,13 @@ export default function SongDetailPage() {
                   type="button"
                   onClick={handleAddToSetlist}
                   disabled={addingToSetlist || !targetSetlistId}
-                  className="px-3 py-1 text-xs border border-slate-300 rounded hover:bg-slate-100 disabled:opacity-40"
+                  className="
+                    inline-flex items-center justify-center
+                    px-3 py-1 text-xs font-medium rounded border
+                    border-slate-300 bg-[var(--background)] text-[var(--foreground)]
+                    hover:bg-slate-100 dark:hover:bg-slate-800
+                    dark:border-slate-700 disabled:opacity-50
+                  "
                 >
                   {addingToSetlist
                     ? 'Нэмэж байна…'
@@ -679,7 +722,7 @@ export default function SongDetailPage() {
               </div>
 
               {addSetlistError && (
-                <p className="text-xs text-red-500">
+                <p className="text-xs text-red-500 dark:text-slate-400">
                   {addSetlistError}
                 </p>
               )}
