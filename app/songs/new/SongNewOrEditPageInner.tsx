@@ -281,6 +281,7 @@ export default function SongNewOrEditPageInner() {
             type="text"
             value={form.title}
             onChange={(e) => updateField('title', e.target.value)}
+            placeholder="Жишээ: &quot;Эзэнд алдар&quot;, &quot;Таны хайр&quot; гэх мэт"
             className="
               w-full rounded border px-3 py-2 text-sm
               border-slate-300 bg-[var(--background)] text-[var(--foreground)]
@@ -302,10 +303,12 @@ export default function SongNewOrEditPageInner() {
               onChange={(e) =>
                 updateField('original_key', e.target.value.toUpperCase())
               }
+              placeholder="Жишээ: D, E♭, F#m"
               className="
                 w-full rounded border px-3 py-2 text-sm
                 border-slate-300 bg-[var(--background)] text-[var(--foreground)]
-                dark:border-slate-700
+                placeholder:text-slate-400
+                dark:border-slate-700 dark:placeholder:text-slate-500
               "
             />
           </div>
@@ -318,10 +321,12 @@ export default function SongNewOrEditPageInner() {
               type="text"
               value={form.tempo}
               onChange={(e) => updateField('tempo', e.target.value)}
+              placeholder="Жишээ: 72 BPM, &quot;4/4&quot;, &quot;Slow ballad&quot;"
               className="
                 w-full rounded border px-3 py-2 text-sm
                 border-slate-300 bg-[var(--background)] text-[var(--foreground)]
-                dark:border-slate-700
+                placeholder:text-slate-400
+                dark:border-slate-700 dark:placeholder:text-slate-500
               "
             />
           </div>
@@ -335,10 +340,12 @@ export default function SongNewOrEditPageInner() {
           <textarea
             value={form.lyrics}
             onChange={(e) => updateField('lyrics', e.target.value)}
+            placeholder={`ChordPro жишээ:\n\n[D] Эзэн Таныг [G] магтана\n[A] Зүрх минь Танд [Bm] захирагдана\n\n# Тайлбар:\n# - Аккордыг дөрвөлжин хаалтанд бичнэ: [D], [G], [A]\n# - Коммент, зааврыг # тэмдэг ашиглаж бичиж болно.`}
             className="
               w-full min-h-[240px] rounded border px-3 py-2 text-sm font-mono
               border-slate-300 bg-[var(--background)] text-[var(--foreground)]
-              dark:border-slate-700
+              placeholder:text-slate-400
+              dark:border-slate-700 dark:placeholder:text-slate-500
             "
           />
         </div>
@@ -352,6 +359,7 @@ export default function SongNewOrEditPageInner() {
             type="url"
             value={form.youtube_url}
             onChange={(e) => updateField('youtube_url', e.target.value)}
+            placeholder="Жишээ: https://www.youtube.com/watch?v=XXXXXXXXXXX"
             className="
               w-full rounded border px-3 py-2 text-sm
               border-slate-300 bg-[var(--background)] text-[var(--foreground)]
