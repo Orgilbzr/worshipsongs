@@ -197,7 +197,7 @@ export default function SongNewOrEditPageInner() {
 
     try {
       if (isEditMode && songId) {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('songs')
           .update({
             title,
@@ -207,15 +207,14 @@ export default function SongNewOrEditPageInner() {
             youtube_url: youtube_url || null,
           })
           .eq('id', songId)
-          .select('id')
-          .single()
 
         if (error) {
+          console.error('UPDATE ERROR:', error)
           setError('Шинэчлэх үед алдаа гарлаа.')
           return
         }
 
-        router.push(`/songs/${data.id}`)
+        router.push(`/songs/${songId}`)
       } else {
         const { data, error } = await supabase
           .from('songs')
@@ -229,7 +228,8 @@ export default function SongNewOrEditPageInner() {
           .select('id')
           .single()
 
-        if (error) {
+        if (error || !data) {
+          console.error('INSERT ERROR:', error)
           setError('Хадгалах үед алдаа гарлаа.')
           return
         }
@@ -247,7 +247,6 @@ export default function SongNewOrEditPageInner() {
   return (
     <div className="space-y-4 max-w-2xl">
 
-      {/* Бусад page-тэй адил "Буцах" товч */}
       <button
         onClick={() => router.push('/songs')}
         className="
@@ -272,7 +271,7 @@ export default function SongNewOrEditPageInner() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Title */}
+
         <div className="space-y-1">
           <label className="block text-sm font-medium">
             Дууны нэр *
@@ -281,17 +280,15 @@ export default function SongNewOrEditPageInner() {
             type="text"
             value={form.title}
             onChange={(e) => updateField('title', e.target.value)}
-            placeholder="Жишээ: &quot;Эзэнд алдар&quot;, &quot;Таны хайр&quot; гэх мэт"
+            placeholder="Жишээ: “Эзэнд алдар”, “Таны хайр”"
             className="
               w-full rounded border px-3 py-2 text-sm
               border-slate-300 bg-[var(--background)] text-[var(--foreground)]
-              placeholder:text-slate-400
-              dark:border-slate-700 dark:placeholder:text-slate-500
+              dark:border-slate-700
             "
           />
         </div>
 
-        {/* Key + Tempo */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1">
             <label className="block text-sm font-medium">
@@ -303,12 +300,11 @@ export default function SongNewOrEditPageInner() {
               onChange={(e) =>
                 updateField('original_key', e.target.value.toUpperCase())
               }
-              placeholder="Жишээ: D, E♭, F#m"
+              placeholder="Жишээ: D, Eb, F#m"
               className="
                 w-full rounded border px-3 py-2 text-sm
                 border-slate-300 bg-[var(--background)] text-[var(--foreground)]
-                placeholder:text-slate-400
-                dark:border-slate-700 dark:placeholder:text-slate-500
+                dark:border-slate-700
               "
             />
           </div>
@@ -321,18 +317,16 @@ export default function SongNewOrEditPageInner() {
               type="text"
               value={form.tempo}
               onChange={(e) => updateField('tempo', e.target.value)}
-              placeholder="Жишээ: 72 BPM, &quot;4/4&quot;, &quot;Slow ballad&quot;"
+              placeholder="72 BPM, 4/4, Slow ballad"
               className="
                 w-full rounded border px-3 py-2 text-sm
                 border-slate-300 bg-[var(--background)] text-[var(--foreground)]
-                placeholder:text-slate-400
-                dark:border-slate-700 dark:placeholder:text-slate-500
+                dark:border-slate-700
               "
             />
           </div>
         </div>
 
-        {/* Lyrics */}
         <div className="space-y-1">
           <label className="block text-sm font-medium">
             Дууны үг / ChordPro *
@@ -340,36 +334,30 @@ export default function SongNewOrEditPageInner() {
           <textarea
             value={form.lyrics}
             onChange={(e) => updateField('lyrics', e.target.value)}
-            placeholder={`ChordPro жишээ:\n\n[D] Эзэн Таныг [G] магтана\n[A] Зүрх минь Танд [Bm] захирагдана\n\n# Тайлбар:\n# - Аккордыг дөрвөлжин хаалтанд бичнэ: [D], [G], [A]\n# - Коммент, зааврыг # тэмдэг ашиглаж бичиж болно.`}
+            placeholder={`ChordPro жишээ:\n\n{intro}\n[D] Эзэн Таныг [G] магтана\n[A] Зүрх минь Танд [Bm] захирагдана\n\n{verse}\n[G] Амьдрал минь [D] Танд зориулагдсан\n[Em] Зүрх сэтгэл [A] Таныг хүснэ\n\n{chorus}\n[D] Таныг би [G] магтана\n[Bm] Таны нэрийг [A] өргөнө\n\n{bridge}\n[Em] Та л бүх [G] найдвар минь\n[D] Та л миний [A] аврал минь\n\n# Тайлбар:\n# - Хэсгийн гарчгийг {intro}, {verse}, {chorus}, {bridge} гэх мэт tag-аар тэмдэглэнэ.\n# - Аккордыг дөрвөлжин хаалтанд бичнэ: [D], [G], [A], [Bm] гэх мэт.\n# - # тэмдэгтэй мөрийг коммент / тайлбар хэлбэрээр ашиглаж болно.`}
             className="
               w-full min-h-[240px] rounded border px-3 py-2 text-sm font-mono
               border-slate-300 bg-[var(--background)] text-[var(--foreground)]
-              placeholder:text-slate-400
-              dark:border-slate-700 dark:placeholder:text-slate-500
+              dark:border-slate-700
             "
           />
         </div>
 
-        {/* Youtube */}
         <div className="space-y-1">
-          <label className="block text-sm font-medium">
-            Youtube линк
-          </label>
+          <label className="block text-sm font-medium">Youtube линк</label>
           <input
             type="url"
             value={form.youtube_url}
             onChange={(e) => updateField('youtube_url', e.target.value)}
-            placeholder="Жишээ: https://www.youtube.com/watch?v=XXXXXXXXXXX"
+            placeholder="https://www.youtube.com/watch?v=XXXXXX"
             className="
               w-full rounded border px-3 py-2 text-sm
               border-slate-300 bg-[var(--background)] text-[var(--foreground)]
-              placeholder:text-slate-400
-              dark:border-slate-700 dark:placeholder:text-slate-500
+              dark:border-slate-700
             "
           />
         </div>
 
-        {/* Save – бусад товчтой адил загвар */}
         <button
           type="submit"
           disabled={saving}
@@ -389,6 +377,7 @@ export default function SongNewOrEditPageInner() {
             ? 'Шинэчлэх'
             : 'Хадгалах'}
         </button>
+
       </form>
     </div>
   )
