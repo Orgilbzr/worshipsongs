@@ -82,38 +82,25 @@ export default function LoginPage() {
         return
       }
 
-      // ───────── Бүртгүүлэх + profiles insert ─────────
+      // ───────── Бүртгүүлэх ─────────
+      // profiles мөрийг auth.users trigger автоматаар үүсгэнэ.
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
+        options: {
+          data: {
+            profile_trigger_v1: true,
+            full_name: fullName.trim(),
+            phone: phone.trim() || null,
+            ...roles,
+          },
+        },
       })
       if (signUpError) throw signUpError
 
-      const user = data.user
-      if (!user) {
+      if (!data.user) {
         throw new Error('Хэрэглэгч үүссэнгүй.')
       }
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: user.id,
-          full_name: fullName.trim(),
-          phone: phone.trim() || null,
-
-          lead: roles.lead,
-          vocal: roles.vocal,
-          acoustic: roles.acoustic,
-          electric: roles.electric,
-          piano: roles.piano,
-          bass: roles.bass,
-          drum: roles.drum,
-          sound: roles.sound,
-          visual: roles.visual,
-          live: roles.live,
-        })
-
-      if (profileError) throw profileError
 
       router.push('/')
       router.refresh()
